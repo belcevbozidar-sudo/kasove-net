@@ -35,9 +35,9 @@ export default function Footer() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Твоят имейл"
-                className="w-full rounded-full border-0 bg-white/95 px-4 py-3 text-sm text-bg outline-none placeholder:text-bg/50"
+                className="w-full rounded-full border-0 bg-white/95 px-4 py-3 text-sm text-neutral-900 outline-none placeholder:text-neutral-500"
               />
-              <button className="shrink-0 rounded-full bg-bg px-5 py-3 text-sm font-semibold text-white hover:brightness-125">
+              <button className="shrink-0 rounded-full bg-neutral-900 px-5 py-3 text-sm font-semibold text-white hover:brightness-125">
                 Абонирай се
               </button>
             </form>

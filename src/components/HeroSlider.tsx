@@ -68,8 +68,8 @@ export default function HeroSlider() {
             className={`object-cover transition-opacity duration-700 ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/40 to-bg/10" />
-        <div className="absolute inset-0 bg-gradient-to-r from-bg/80 via-bg/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/10 to-transparent" />
 
         <div key={index} className="relative z-10 flex h-full flex-col justify-end p-6 sm:p-10 lg:p-14 animate-fade-up">
           <span className="mb-3 inline-block w-fit rounded-full gradient-brand px-3.5 py-1.5 text-xs font-semibold text-white">
@@ -90,14 +90,14 @@ export default function HeroSlider() {
         <button
           onClick={prev}
           aria-label="Предишен слайд"
-          className="absolute left-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-bg/50 p-2 text-white backdrop-blur hover:bg-bg/80 sm:block"
+          className="absolute left-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-black/40 p-2 text-white backdrop-blur hover:bg-black/60 sm:block"
         >
           <ChevronLeftIcon className="w-5 h-5" />
         </button>
         <button
           onClick={next}
           aria-label="Следващ слайд"
-          className="absolute right-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-bg/50 p-2 text-white backdrop-blur hover:bg-bg/80 sm:block"
+          className="absolute right-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-black/40 p-2 text-white backdrop-blur hover:bg-black/60 sm:block"
         >
           <ChevronRightIcon className="w-5 h-5" />
         </button>
