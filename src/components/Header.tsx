@@ -86,7 +86,13 @@ export default function Header() {
                   {c.shortName}
                 </Link>
               ))}
-              <Link href="/shop" className="font-semibold text-accent-lime hover:brightness-110">
+              <Link href="/shop?category=toys" className="font-bold text-accent-lime hover:brightness-110 flex items-center gap-1 transition-all">
+                Играчки
+                <span className="rounded bg-accent-lime px-1 py-0.5 text-[9px] font-extrabold text-bg uppercase tracking-wider animate-pulse">
+                  Хит
+                </span>
+              </Link>
+              <Link href="/shop" className="font-semibold text-text hover:text-accent-lime">
                 Всички продукти
               </Link>
             </div>

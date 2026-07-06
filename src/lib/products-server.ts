@@ -51,6 +51,8 @@ export interface FilterOptions {
   category?: string;
   sort?: string;
   q?: string;
+  scale?: string;
+  model?: string;
   cursor?: string | null;
   numItems?: number;
 }
@@ -71,6 +73,8 @@ export async function filterProducts(opts: FilterOptions): Promise<FilterResult>
     category: opts.category && opts.category !== "all" ? opts.category : undefined,
     sort,
     q: opts.q || undefined,
+    scale: opts.scale && opts.scale !== "all" ? opts.scale : undefined,
+    model: opts.model && opts.model !== "all" ? opts.model : undefined,
     paginationOpts: {
       numItems: opts.numItems ?? 24,
       cursor: opts.cursor ?? null,
@@ -83,4 +87,8 @@ export async function filterProducts(opts: FilterOptions): Promise<FilterResult>
     isDone: result.isDone,
     continueCursor: result.continueCursor,
   };
+}
+
+export async function getBrandModels(brand: string): Promise<string[]> {
+  return await fetchQuery(api.products.getModels, { brand });
 }

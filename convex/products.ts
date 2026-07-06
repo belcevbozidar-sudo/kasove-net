@@ -48,9 +48,79 @@ export const list = query({
     brand: v.optional(v.string()),
     sort: SORTS,
     q: v.optional(v.string()),
+    scale: v.optional(v.string()),
+    model: v.optional(v.string()),
     paginationOpts: paginationOptsValidator,
   },
-  handler: async (ctx, { category, brand, sort, q, paginationOpts }) => {
+  handler: async (ctx, { category, brand, sort, q, scale, model, paginationOpts }) => {
+    // If scale or model is specified, filter in-memory
+    if ((scale && scale !== "all") || (model && model !== "all")) {
+      const scaleNum = scale ? (scale.split(":")[1] || scale) : null;
+      const matchesScale = (name: string) => {
+        if (!scaleNum) return true;
+        return name.includes(`1:${scaleNum}`) || name.includes(`1/${scaleNum}`) || name.includes(`1-${scaleNum}`);
+      };
+
+      const matchesModel = (p: Doc<"products">) => {
+        if (!model || model === "all") return true;
+        return (
+          p.model === model ||
+          p.name.toLowerCase().includes(model.toLowerCase())
+        );
+      };
+
+      let products: Doc<"products">[] = [];
+      if (q && q.trim()) {
+        const searchResults = await ctx.db
+          .query("products")
+          .withSearchIndex("search_name", (query) => {
+            let sq = query.search("name", q.trim());
+            if (category) sq = sq.eq("category", category);
+            if (brand) sq = sq.eq("brand", brand);
+            return sq;
+          })
+          .take(1000);
+        products = searchResults;
+      } else if (category && brand) {
+        products = await ctx.db
+          .query("products")
+          .withIndex("by_brand_category", (qq) => qq.eq("brand", brand).eq("category", category))
+          .collect();
+      } else if (category) {
+        products = await ctx.db
+          .query("products")
+          .withIndex("by_category", (qq) => qq.eq("category", category))
+          .collect();
+      } else if (brand) {
+        products = await ctx.db
+          .query("products")
+          .withIndex("by_brand", (qq) => qq.eq("brand", brand))
+          .collect();
+      } else {
+        products = await ctx.db.query("products").collect();
+      }
+
+      const filtered = products.filter((p) => matchesScale(p.name) && matchesModel(p));
+
+      const sorted = [...filtered].sort((a, b) => {
+        if (sort === "price-asc") return a.price - b.price;
+        if (sort === "price-desc") return b.price - a.price;
+        if (sort === "rating") return b.rating - a.rating;
+        return b._creationTime - a._creationTime;
+      });
+
+      const start = paginationOpts.cursor ? parseInt(paginationOpts.cursor, 10) : 0;
+      const end = start + paginationOpts.numItems;
+      const page = sorted.slice(start, end);
+      const isDone = end >= sorted.length;
+      return {
+        page,
+        isDone,
+        continueCursor: isDone ? "" : String(end),
+        totalCount: sorted.length,
+      };
+    }
+
     // Free-text search takes priority; relevance-ranked, no custom sort.
     if (q && q.trim()) {
       let searchQuery = ctx.db
@@ -204,5 +274,26 @@ export const getRelated = query({
       if (merged.length >= limit) break;
     }
     return merged;
+  },
+});
+
+export const getModels = query({
+  args: { brand: v.string() },
+  handler: async (ctx, { brand }) => {
+    const products = await ctx.db
+      .query("products")
+      .withIndex("by_brand", (q) => q.eq("brand", brand))
+      .collect();
+
+    const modelsSet = new Set<string>();
+    for (const p of products) {
+      if (p.model && p.model !== "Универсален" && p.model.trim()) {
+        modelsSet.add(p.model.trim());
+      }
+    }
+
+    return Array.from(modelsSet).sort((a, b) => 
+      b.localeCompare(a, undefined, { numeric: true, sensitivity: "base" })
+    );
   },
 });
