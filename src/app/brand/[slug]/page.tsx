@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ShopFilters from "@/components/ShopFilters";
 import ProductCard from "@/components/ProductCard";
-import { brands, filterProducts, getBrand, getCategory } from "@/lib/data";
+import { brands, getBrand, getCategory } from "@/lib/data";
+import { filterProducts } from "@/lib/products-server";
 
 export function generateStaticParams() {
   return brands.map((b) => ({ slug: b.slug }));
@@ -32,7 +33,7 @@ export default async function BrandPage({
   if (!brand) notFound();
 
   const sp = await searchParams;
-  const results = filterProducts({ ...sp, brand: slug });
+  const { products: results } = filterProducts({ ...sp, brand: slug, limit: 1000 });
   const category = sp.category ? getCategory(sp.category) : undefined;
 
   return (

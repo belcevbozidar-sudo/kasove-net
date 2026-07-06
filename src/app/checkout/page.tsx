@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
-import { formatPrice, getProductById, FREE_SHIPPING_THRESHOLD, DEFAULT_SHIPPING_FEE } from "@/lib/data";
+import { formatPrice, FREE_SHIPPING_THRESHOLD, DEFAULT_SHIPPING_FEE } from "@/lib/data";
 import { LockIcon } from "@/components/Icons";
 
 export default function CheckoutPage() {
@@ -111,23 +111,16 @@ export default function CheckoutPage() {
           <h2 className="font-heading font-bold">Обобщение ({itemCount})</h2>
           <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
             {lines.map((line) => {
-              const product = getProductById(line.productId);
-              if (!product) return null;
-              const anchor = line.bundleProductId ? getProductById(line.bundleProductId) : undefined;
-              const isBundleDiscounted = Boolean(anchor && anchor.bundleWith === product.id && anchor.bundleDiscountPct);
-              const unitPrice = isBundleDiscounted
-                ? product.price * (1 - (anchor!.bundleDiscountPct as number) / 100)
-                : product.price;
               return (
                 <div key={`${line.productId}-${line.bundleProductId ?? "solo"}`} className="flex items-center gap-3">
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-2">
-                    <Image src={product.image} alt={product.name} fill sizes="48px" className="object-cover" />
+                    <Image src={line.image} alt={line.name} fill sizes="48px" className="object-cover" />
                   </div>
                   <div className="flex-1 text-xs">
-                    <p className="font-medium leading-snug line-clamp-1">{product.name}</p>
+                    <p className="font-medium leading-snug line-clamp-1">{line.name}</p>
                     <p className="text-text-muted">Бр: {line.quantity}</p>
                   </div>
-                  <span className="text-xs font-semibold">{formatPrice(unitPrice * line.quantity)}</span>
+                  <span className="text-xs font-semibold">{formatPrice(line.price * line.quantity)}</span>
                 </div>
               );
             })}

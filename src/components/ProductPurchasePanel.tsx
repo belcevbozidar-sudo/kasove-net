@@ -37,9 +37,9 @@ export default function ProductPurchasePanel({
       : 0;
 
   function handleAddToCart() {
-    addItem(product.id, quantity);
+    addItem(product, quantity);
     if (bundleProduct && includeBundle) {
-      addItem(bundleProduct.id, quantity, product.id);
+      addItem(bundleProduct, quantity, product);
     }
     setJustAdded(true);
     openDrawer();

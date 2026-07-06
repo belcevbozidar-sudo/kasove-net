@@ -5,7 +5,7 @@ import BundlePromoBanner from "@/components/BundlePromoBanner";
 import ProductRail from "@/components/ProductRail";
 import TrustBadges from "@/components/TrustBadges";
 import Testimonials from "@/components/Testimonials";
-import { getBestSellers, getNewArrivals } from "@/lib/data";
+import { getBestSellers, getNewArrivals } from "@/lib/products-server";
 
 export default function Home() {
   const bestSellers = getBestSellers(8);

@@ -4,11 +4,8 @@ import ProductGallery from "@/components/ProductGallery";
 import ProductPurchasePanel from "@/components/ProductPurchasePanel";
 import ProductTabs from "@/components/ProductTabs";
 import ProductRail from "@/components/ProductRail";
-import { getBrand, getBundleProduct, getCategory, getProductBySlug, getRelatedProducts, products } from "@/lib/data";
-
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
-}
+import { getBrand, getCategory } from "@/lib/data";
+import { getBundleProduct, getProductBySlug, getRelatedProducts } from "@/lib/products-server";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

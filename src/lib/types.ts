@@ -5,6 +5,19 @@ export type BrandSlug =
   | "huawei"
   | "google"
   | "oneplus"
+  | "sony"
+  | "lg"
+  | "motorola"
+  | "realme"
+  | "nokia"
+  | "zte"
+  | "lenovo"
+  | "htc"
+  | "asus"
+  | "honor"
+  | "alcatel"
+  | "blackberry"
+  | "coolpad"
   | "universal";
 
 export interface Brand {
@@ -14,13 +27,26 @@ export interface Brand {
 }
 
 export type CategorySlug =
-  | "cases"
+  | "gsm-accessories"
+  | "leather-cases"
+  | "silicone-cases"
+  | "hard-cases"
   | "protectors"
-  | "chargers"
-  | "cables"
-  | "earbuds"
+  | "chargers-12v"
+  | "chargers-220v"
+  | "tablet-cases"
+  | "usb-cables"
+  | "car-stands"
+  | "batteries"
+  | "handsfree"
+  | "memory-cards"
+  | "toys"
+  | "bluetooth-headphones"
   | "powerbanks"
-  | "stands";
+  | "universal-cases"
+  | "apple-accessories"
+  | "smart-devices"
+  | "other";
 
 export interface Category {
   slug: CategorySlug;

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useCart } from "@/lib/cart-context";
-import { formatPrice, getProductById, FREE_SHIPPING_THRESHOLD } from "@/lib/data";
+import { formatPrice, FREE_SHIPPING_THRESHOLD } from "@/lib/data";
 import { CloseIcon, MinusIcon, PlusIcon, TrashIcon } from "./Icons";
 
 export default function CartDrawer() {
@@ -56,7 +56,7 @@ export default function CartDrawer() {
                   Добави още <span className="text-accent-lime font-semibold">{formatPrice(remainingForFreeShipping)}</span> за безплатна доставка
                 </p>
               ) : (
-                <p className="text-xs text-success font-semibold">Имаш право на безплатна доставка 🎉</p>
+                <p className="text-xs font-semibold text-success">Имаш право на безплатна доставка 🎉</p>
               )}
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
                 <div className="h-full gradient-brand rounded-full transition-all" style={{ width: `${progressPct}%` }} />
@@ -65,24 +65,17 @@ export default function CartDrawer() {
 
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
               {lines.map((line) => {
-                const product = getProductById(line.productId);
-                if (!product) return null;
-                const anchor = line.bundleProductId ? getProductById(line.bundleProductId) : undefined;
-                const isBundleDiscounted = Boolean(anchor && anchor.bundleWith === product.id && anchor.bundleDiscountPct);
-                const unitPrice = isBundleDiscounted
-                  ? product.price * (1 - (anchor!.bundleDiscountPct as number) / 100)
-                  : product.price;
                 return (
                   <div key={`${line.productId}-${line.bundleProductId ?? "solo"}`} className="flex gap-3">
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-surface-2">
-                      <Image src={product.image} alt={product.name} fill sizes="80px" className="object-cover" />
+                      <Image src={line.image} alt={line.name} fill sizes="80px" className="object-cover" />
                     </div>
                     <div className="flex flex-1 flex-col">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="text-sm font-semibold leading-snug">{product.name}</p>
-                          <p className="text-xs text-text-muted">{product.model}</p>
-                          {isBundleDiscounted && (
+                          <p className="text-sm font-semibold leading-snug">{line.name}</p>
+                          <p className="text-xs text-text-muted">{line.model}</p>
+                          {line.isBundleDiscounted && (
                             <span className="mt-1 inline-block rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent-lime">
                               Бъндел отстъпка
                             </span>
@@ -114,7 +107,7 @@ export default function CartDrawer() {
                             <PlusIcon className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <span className="text-sm font-bold">{formatPrice(unitPrice * line.quantity)}</span>
+                        <span className="text-sm font-bold">{formatPrice(line.price * line.quantity)}</span>
                       </div>
                     </div>
                   </div>

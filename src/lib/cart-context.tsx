@@ -9,17 +9,24 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getProductById } from "./data";
 
 export interface CartLine {
   productId: string;
   quantity: number;
   bundleProductId?: string;
+  name: string;
+  price: number;
+  originalPrice: number;
+  image: string;
+  model: string;
+  slug: string;
+  isBundleDiscounted?: boolean;
+  bundleDiscountPct?: number;
 }
 
 interface CartContextValue {
   lines: CartLine[];
-  addItem: (productId: string, quantity?: number, bundleProductId?: string) => void;
+  addItem: (product: any, quantity?: number, bundleAnchorProduct?: any) => void;
   removeItem: (productId: string) => void;
   setQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -33,7 +40,7 @@ interface CartContextValue {
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
-const STORAGE_KEY = "kasove-cart-v1";
+const STORAGE_KEY = "kasove-cart-v2"; // upgraded storage version for breaking data type change
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
@@ -41,10 +48,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    // One-time hydration from localStorage after mount, to keep server/client initial render in sync.
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setLines(JSON.parse(raw));
     } catch {
       // ignore corrupt storage
@@ -58,11 +63,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [lines, hydrated]);
 
   const addItem = useCallback(
-    (productId: string, quantity = 1, bundleProductId?: string) => {
+    (product: any, quantity = 1, bundleAnchorProduct?: any) => {
       setLines((prev) => {
+        const productId = product.id;
+        const bundleProductId = bundleAnchorProduct?.id;
         const existingIndex = prev.findIndex(
           (l) => l.productId === productId && l.bundleProductId === bundleProductId
         );
+        
+        let isBundleDiscounted = false;
+        let bundleDiscountPct = 0;
+        let finalPrice = product.price;
+        
+        if (bundleAnchorProduct && bundleAnchorProduct.bundleDiscountPct && bundleAnchorProduct.bundleWith === product.id) {
+          isBundleDiscounted = true;
+          bundleDiscountPct = bundleAnchorProduct.bundleDiscountPct;
+          finalPrice = product.price * (1 - bundleDiscountPct / 100);
+        }
+
         if (existingIndex >= 0) {
           const next = [...prev];
           next[existingIndex] = {
@@ -71,7 +89,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
           };
           return next;
         }
-        return [...prev, { productId, quantity, bundleProductId }];
+
+        return [
+          ...prev,
+          {
+            productId,
+            quantity,
+            bundleProductId,
+            name: product.name,
+            price: finalPrice,
+            originalPrice: product.price,
+            image: product.image,
+            model: product.model,
+            slug: product.slug,
+            isBundleDiscounted,
+            bundleDiscountPct
+          },
+        ];
       });
       setIsDrawerOpen(true);
     },
@@ -97,19 +131,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     let sub = 0;
     let savings = 0;
     for (const line of lines) {
-      const product = getProductById(line.productId);
-      if (!product) continue;
       count += line.quantity;
-      let unitPrice = product.price;
-      if (line.bundleProductId) {
-        const anchor = getProductById(line.bundleProductId);
-        if (anchor && anchor.bundleWith === product.id && anchor.bundleDiscountPct) {
-          const discount = product.price * (anchor.bundleDiscountPct / 100);
-          unitPrice -= discount;
-          savings += discount * line.quantity;
-        }
+      sub += line.price * line.quantity;
+      if (line.isBundleDiscounted && line.bundleDiscountPct) {
+        const discountAmount = line.originalPrice - line.price;
+        savings += discountAmount * line.quantity;
       }
-      sub += unitPrice * line.quantity;
     }
     return { itemCount: count, subtotal: sub, bundleSavings: savings };
   }, [lines]);

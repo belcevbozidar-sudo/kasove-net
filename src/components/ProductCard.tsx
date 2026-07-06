@@ -55,7 +55,7 @@ export default function ProductCard({ product }: { product: Product }) {
           <button
             onClick={(e) => {
               e.preventDefault();
-              addItem(product.id, 1);
+              addItem(product, 1);
             }}
             className="rounded-full gradient-brand px-3.5 py-2 text-xs font-semibold text-white transition-transform active:scale-95 hover:brightness-110"
           >
