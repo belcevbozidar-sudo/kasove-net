@@ -3,8 +3,9 @@ import Link from "next/link";
 import ShopFilters from "@/components/ShopFilters";
 import ProductCard from "@/components/ProductCard";
 import { getBrand, getCategory, categories } from "@/lib/data";
-import { filterProducts, getBrandModels } from "@/lib/products-server";
+import { filterProducts } from "@/lib/products-server";
 import { decodeCursor, decodeHistory, nextLinkParams, prevLinkParams } from "@/lib/pagination";
+import brandModelsData from "@/lib/models.json";
 
 export const metadata = {
   title: "Магазин — Кейсове.нет",
@@ -53,10 +54,8 @@ export default async function ShopPage({
   const showModelStep = isWizardActive && !sp.model;
   const showCategoryStep = isWizardActive && sp.model && (!sp.category || sp.category === "all");
 
-  let models: string[] = [];
-  if (showModelStep) {
-    models = await getBrandModels(sp.brand!);
-  }
+  // Load models statically from local JSON file
+  const models = sp.brand ? ((brandModelsData as Record<string, string[]>)[sp.brand] || []) : [];
 
   let results: any[] = [];
   let totalCount: number | null = null;
@@ -131,7 +130,7 @@ export default async function ShopPage({
             <span className="mb-2 rounded-full bg-accent-lime/10 px-3 py-1 text-xs font-semibold text-accent-lime uppercase tracking-wider">
               Стъпка 2 от 3
             </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-white">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-text">
               Изберете модел за {brand?.name}
             </h2>
             <p className="mt-1.5 text-sm text-text-muted max-w-md">
@@ -175,7 +174,7 @@ export default async function ShopPage({
             <span className="mb-2 rounded-full bg-accent-lime/10 px-3 py-1 text-xs font-semibold text-accent-lime uppercase tracking-wider">
               Стъпка 3 от 3
             </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-white">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-text">
               Изберете тип аксесоар за {sp.model}
             </h2>
             <p className="mt-1.5 text-sm text-text-muted max-w-md">
