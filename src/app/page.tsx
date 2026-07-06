@@ -7,9 +7,8 @@ import TrustBadges from "@/components/TrustBadges";
 import Testimonials from "@/components/Testimonials";
 import { getBestSellers, getNewArrivals } from "@/lib/products-server";
 
-export default function Home() {
-  const bestSellers = getBestSellers(8);
-  const newArrivals = getNewArrivals(8);
+export default async function Home() {
+  const [bestSellers, newArrivals] = await Promise.all([getBestSellers(8), getNewArrivals(8)]);
 
   return (
     <>

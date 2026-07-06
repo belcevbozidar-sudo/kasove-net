@@ -4,6 +4,7 @@ import ShopFilters from "@/components/ShopFilters";
 import ProductCard from "@/components/ProductCard";
 import { getBrand, getCategory } from "@/lib/data";
 import { filterProducts } from "@/lib/products-server";
+import { decodeCursor, decodeHistory, nextLinkParams, prevLinkParams } from "@/lib/pagination";
 
 export const metadata = {
   title: "Магазин — Кейсове.нет",
@@ -14,17 +15,20 @@ interface ShopSearchParams {
   category?: string;
   sort?: string;
   q?: string;
-  page?: string;
+  cursor?: string;
+  h?: string;
 }
 
-function getPageLink(pageNum: number, searchParams: ShopSearchParams) {
+function buildLink(base: ShopSearchParams, overrides: { cursor: string; h: string }) {
   const params = new URLSearchParams();
-  if (searchParams.brand) params.set("brand", searchParams.brand);
-  if (searchParams.category) params.set("category", searchParams.category);
-  if (searchParams.sort) params.set("sort", searchParams.sort);
-  if (searchParams.q) params.set("q", searchParams.q);
-  params.set("page", String(pageNum));
-  return `/shop?${params.toString()}`;
+  if (base.brand) params.set("brand", base.brand);
+  if (base.category) params.set("category", base.category);
+  if (base.sort) params.set("sort", base.sort);
+  if (base.q) params.set("q", base.q);
+  if (overrides.cursor && overrides.cursor !== "start") params.set("cursor", overrides.cursor);
+  if (overrides.h) params.set("h", overrides.h);
+  const qs = params.toString();
+  return `/shop${qs ? `?${qs}` : ""}`;
 }
 
 export default async function ShopPage({
@@ -33,18 +37,18 @@ export default async function ShopPage({
   searchParams: Promise<ShopSearchParams>;
 }) {
   const sp = await searchParams;
-  const page = Number(sp.page) || 1;
-  const limit = 24;
-  
-  const { products: results, totalCount, totalPages, currentPage } = filterProducts({
+  const history = decodeHistory(sp.h);
+  const currentPage = history.length + 1;
+
+  const { products: results, totalCount, isDone, continueCursor } = await filterProducts({
     brand: sp.brand,
     category: sp.category,
     sort: sp.sort,
     q: sp.q,
-    page,
-    limit,
+    cursor: decodeCursor(sp.cursor),
+    numItems: 24,
   });
-  
+
   const brand = sp.brand ? getBrand(sp.brand) : undefined;
   const category = sp.category ? getCategory(sp.category) : undefined;
 
@@ -56,7 +60,9 @@ export default async function ShopPage({
         <Link href="/" className="hover:text-text">Начало</Link> <span className="mx-1">/</span> Магазин
       </nav>
       <h1 className="mb-1 font-heading text-3xl font-extrabold">{title}</h1>
-      <p className="mb-6 text-sm text-text-muted">{totalCount} продукта (Страница {currentPage} от {totalPages || 1})</p>
+      <p className="mb-6 text-sm text-text-muted">
+        {totalCount !== null ? `${totalCount} продукта · ` : ""}Страница {currentPage}
+      </p>
 
       <Suspense fallback={null}>
         <ShopFilters />
@@ -76,13 +82,12 @@ export default async function ShopPage({
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
-          
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
+
+          {(currentPage > 1 || !isDone) && (
             <div className="mt-12 flex items-center justify-center gap-2">
               {currentPage > 1 ? (
                 <Link
-                  href={getPageLink(currentPage - 1, sp)}
+                  href={buildLink(sp, prevLinkParams(history))}
                   className="rounded-xl border border-border-c bg-surface px-4 py-2 text-sm font-semibold text-text hover:bg-surface-2 transition-colors"
                 >
                   ← Предишна
@@ -92,39 +97,14 @@ export default async function ShopPage({
                   ← Предишна
                 </span>
               )}
-              
-              <div className="hidden sm:flex items-center gap-1.5">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  // Show pages around current page
-                  let pageNum = currentPage - 2 + i;
-                  if (currentPage <= 2) pageNum = i + 1;
-                  if (currentPage >= totalPages - 1) pageNum = totalPages - 4 + i;
-                  if (pageNum < 1 || pageNum > totalPages) return null;
-                  
-                  const isCurrent = pageNum === currentPage;
-                  return (
-                    <Link
-                      key={pageNum}
-                      href={getPageLink(pageNum, sp)}
-                      className={`h-9 w-9 flex items-center justify-center rounded-xl text-sm font-semibold transition-colors ${
-                        isCurrent
-                          ? "gradient-brand text-white"
-                          : "border border-border-c bg-surface text-text hover:bg-surface-2"
-                      }`}
-                    >
-                      {pageNum}
-                    </Link>
-                  );
-                })}
-              </div>
-              
-              <span className="sm:hidden text-sm text-text-muted font-semibold px-2">
-                {currentPage} / {totalPages}
+
+              <span className="text-sm text-text-muted font-semibold px-2">
+                Страница {currentPage}
               </span>
 
-              {currentPage < totalPages ? (
+              {!isDone ? (
                 <Link
-                  href={getPageLink(currentPage + 1, sp)}
+                  href={buildLink(sp, nextLinkParams(sp.cursor, history, continueCursor))}
                   className="rounded-xl border border-border-c bg-surface px-4 py-2 text-sm font-semibold text-text hover:bg-surface-2 transition-colors"
                 >
                   Следваща →

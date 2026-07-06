@@ -9,19 +9,21 @@ import { getBundleProduct, getProductBySlug, getRelatedProducts } from "@/lib/pr
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   return { title: product ? `${product.name} — ${product.model} | Кейсове.нет` : "Кейсове.нет" };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
   const brand = getBrand(product.brand);
   const category = getCategory(product.category);
-  const bundleProduct = getBundleProduct(product);
-  const related = getRelatedProducts(product);
+  const [bundleProduct, related] = await Promise.all([
+    getBundleProduct(product),
+    getRelatedProducts(product),
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl container-p py-10 pb-28 sm:pb-10">

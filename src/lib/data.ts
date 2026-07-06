@@ -20,6 +20,12 @@ export const brands: Brand[] = [
   { slug: "alcatel", name: "Alcatel", tagline: "Alcatel аксесоари" },
   { slug: "blackberry", name: "BlackBerry", tagline: "BlackBerry аксесоари" },
   { slug: "coolpad", name: "Coolpad", tagline: "Coolpad аксесоари" },
+  { slug: "telenor", name: "Telenor", tagline: "Telenor аксесоари" },
+  { slug: "microsoft", name: "Microsoft", tagline: "Microsoft Lumia аксесоари" },
+  { slug: "a1", name: "A1", tagline: "A1 аксесоари" },
+  { slug: "cat", name: "Cat", tagline: "Cat аксесоари" },
+  { slug: "acer", name: "Acer", tagline: "Acer аксесоари" },
+  { slug: "meizu", name: "Meizu", tagline: "Meizu аксесоари" },
   { slug: "universal", name: "Универсални", tagline: "Аксесоари за всички телефони" },
 ];
 

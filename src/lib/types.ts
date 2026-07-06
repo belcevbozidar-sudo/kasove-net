@@ -18,6 +18,12 @@ export type BrandSlug =
   | "alcatel"
   | "blackberry"
   | "coolpad"
+  | "telenor"
+  | "microsoft"
+  | "a1"
+  | "cat"
+  | "acer"
+  | "meizu"
   | "universal";
 
 export interface Brand {
