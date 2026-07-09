@@ -99,7 +99,7 @@ export default async function ShopPage({
           {brand && (
             <Link
               href="/shop"
-              className="flex items-center gap-1.5 rounded-full bg-surface-2 border border-border-c px-3 py-1 font-semibold text-white hover:border-red-500 hover:text-red-500 transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-surface-2 border border-border-c px-3 py-1 font-semibold text-text hover:border-red-500 transition-colors"
             >
               Марка: {brand.name} <span className="text-[10px] opacity-60">✕</span>
             </Link>
@@ -107,7 +107,7 @@ export default async function ShopPage({
           {sp.model && (
             <Link
               href={`/shop?brand=${sp.brand}`}
-              className="flex items-center gap-1.5 rounded-full bg-surface-2 border border-border-c px-3 py-1 font-semibold text-white hover:border-red-500 hover:text-red-500 transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-surface-2 border border-border-c px-3 py-1 font-semibold text-text hover:border-red-500 transition-colors"
             >
               Модел: {sp.model} <span className="text-[10px] opacity-60">✕</span>
             </Link>
@@ -115,7 +115,7 @@ export default async function ShopPage({
           {category && (
             <Link
               href={`/shop?brand=${sp.brand}&model=${sp.model}`}
-              className="flex items-center gap-1.5 rounded-full bg-surface-2 border border-border-c px-3 py-1 font-semibold text-white hover:border-red-500 hover:text-red-500 transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-surface-2 border border-border-c px-3 py-1 font-semibold text-text hover:border-red-500 transition-colors"
             >
               Категория: {category.name} <span className="text-[10px] opacity-60">✕</span>
             </Link>

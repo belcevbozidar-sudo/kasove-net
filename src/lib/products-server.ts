@@ -21,9 +21,36 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
 }
 
 export async function getBundleProduct(product: Product): Promise<Product | undefined> {
-  if (!product.bundleWith) return undefined;
-  const doc = await fetchQuery(api.products.getBySourceId, { sourceId: product.bundleWith });
-  return doc ? toProduct(doc) : undefined;
+  // 1. If manual bundleWith is set, use it
+  if (product.bundleWith) {
+    const doc = await fetchQuery(api.products.getBySourceId, { sourceId: product.bundleWith });
+    if (doc) return toProduct(doc);
+  }
+
+  // 2. Otherwise, if it is a case category, search for a protector for the same brand and model
+  const caseCategories = new Set([
+    "leather-cases",
+    "silicone-cases",
+    "hard-cases"
+  ]);
+
+  if (caseCategories.has(product.category) && product.model) {
+    const result = await fetchQuery(api.products.list, {
+      brand: product.brand,
+      category: "protectors",
+      model: product.model,
+      paginationOpts: {
+        numItems: 1,
+        cursor: null
+      }
+    });
+
+    if (result.page && result.page.length > 0) {
+      return toProduct(result.page[0]);
+    }
+  }
+
+  return undefined;
 }
 
 export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {

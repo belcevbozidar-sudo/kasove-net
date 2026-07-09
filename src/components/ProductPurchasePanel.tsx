@@ -25,8 +25,9 @@ export default function ProductPurchasePanel({
   const discountPct = product.oldPrice ? Math.round(100 - (product.price / product.oldPrice) * 100) : null;
 
   const bundleDiscountedPrice = useMemo(() => {
-    if (!bundleProduct || !product.bundleDiscountPct) return null;
-    return bundleProduct.price * (1 - product.bundleDiscountPct / 100);
+    if (!bundleProduct) return null;
+    const discount = product.bundleDiscountPct || 20;
+    return bundleProduct.price * (1 - discount / 100);
   }, [bundleProduct, product.bundleDiscountPct]);
 
   const combinedTotal =
@@ -87,7 +88,7 @@ export default function ProductPurchasePanel({
               Умна оферта
             </span>
             <span className="text-xs font-semibold text-accent-lime">
-              -{product.bundleDiscountPct}% на протектора
+              -{product.bundleDiscountPct || 20}% на протектора
             </span>
           </div>
 
