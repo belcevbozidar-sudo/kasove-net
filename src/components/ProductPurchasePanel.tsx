@@ -98,7 +98,7 @@ export default function ProductPurchasePanel({
             <h3 className="font-heading text-sm font-extrabold uppercase tracking-wide text-text flex items-center gap-1.5">
               🛡️ Купете и протектор:
             </h3>
-            <span className="rounded-full bg-accent-lime/10 px-2.5 py-0.5 text-[10px] font-bold text-accent-lime uppercase tracking-wider">
+            <span className="rounded-full gradient-brand px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
               Спести 20%
             </span>
           </div>
@@ -124,7 +124,7 @@ export default function ProductPurchasePanel({
                   </div>
                   <button
                     onClick={() => handleAddProtectorToCart(p)}
-                    className="mt-3 w-full rounded-xl bg-accent-lime/10 py-1.5 text-xs font-bold text-accent-lime hover:bg-accent-lime hover:text-white transition-all text-center"
+                    className="mt-3 w-full rounded-xl bg-accent/10 py-1.5 text-xs font-bold text-accent hover:gradient-brand hover:text-white transition-all text-center cursor-pointer"
                   >
                     Добави
                   </button>
