@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import type { Doc } from "./_generated/dataModel";
 
@@ -295,5 +295,46 @@ export const getModels = query({
     return Array.from(modelsSet).sort((a, b) => 
       b.localeCompare(a, undefined, { numeric: true, sensitivity: "base" })
     );
+  },
+});
+
+export const cleanAllProductImages = mutation({
+  args: { cursor: v.optional(v.string()), limit: v.number() },
+  handler: async (ctx, { cursor, limit }) => {
+    const cleanUrl = (url: string) => {
+      return url.replace(/\/styles\/[^\/]+\/public\//, "/");
+    };
+
+    const page = await ctx.db
+      .query("products")
+      .paginate({
+        numItems: limit,
+        cursor: cursor ?? null,
+      });
+
+    let updatedCount = 0;
+    for (const doc of page.page) {
+      const cleanedImage = cleanUrl(doc.image);
+      const cleanedGallery = doc.gallery.map(cleanUrl);
+
+      const needsUpdate =
+        cleanedImage !== doc.image ||
+        cleanedGallery.some((img, idx) => img !== doc.gallery[idx]);
+
+      if (needsUpdate) {
+        await ctx.db.patch(doc._id, {
+          image: cleanedImage,
+          gallery: cleanedGallery,
+        });
+        updatedCount++;
+      }
+    }
+
+    return {
+      continueCursor: page.continueCursor,
+      isDone: page.isDone,
+      updatedCount,
+      processedCount: page.page.length,
+    };
   },
 });

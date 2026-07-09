@@ -271,6 +271,7 @@ def parse_teasers(html, cat_slug):
                 src = f"https://keisove.net{src}"
             elif not src.startswith("http"):
                 src = f"https://keisove.net/{src}"
+            src = re.sub(r'/styles/[^/]+/public/', '/', src)
             if src not in image_urls:
                 image_urls.append(src)
         if not image_urls:
