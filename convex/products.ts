@@ -298,6 +298,72 @@ export const getModels = query({
   },
 });
 
+export const recategorizeBySourceId = mutation({
+  args: {
+    updates: v.array(v.object({ sourceId: v.string(), category: v.string() })),
+  },
+  handler: async (ctx, { updates }) => {
+    let updatedCount = 0;
+    let notFoundCount = 0;
+    for (const { sourceId, category } of updates) {
+      const doc = await ctx.db
+        .query("products")
+        .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+        .unique();
+      if (!doc) {
+        notFoundCount++;
+        continue;
+      }
+      if (doc.category !== category) {
+        await ctx.db.patch(doc._id, { category });
+        updatedCount++;
+      }
+    }
+    return { updatedCount, notFoundCount, processedCount: updates.length };
+  },
+});
+
+export const insertProducts = mutation({
+  args: {
+    products: v.array(
+      v.object({
+        sourceId: v.string(),
+        slug: v.string(),
+        name: v.string(),
+        brand: v.string(),
+        model: v.string(),
+        category: v.string(),
+        price: v.number(),
+        oldPrice: v.optional(v.number()),
+        hasOldPrice: v.boolean(),
+        image: v.string(),
+        gallery: v.array(v.string()),
+        rating: v.number(),
+        reviewCount: v.number(),
+        description: v.string(),
+        features: v.array(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, { products }) => {
+    let insertedCount = 0;
+    let skippedCount = 0;
+    for (const p of products) {
+      const existing = await ctx.db
+        .query("products")
+        .withIndex("by_sourceId", (q) => q.eq("sourceId", p.sourceId))
+        .unique();
+      if (existing) {
+        skippedCount++;
+        continue;
+      }
+      await ctx.db.insert("products", p);
+      insertedCount++;
+    }
+    return { insertedCount, skippedCount, processedCount: products.length };
+  },
+});
+
 export const cleanAllProductImages = mutation({
   args: { cursor: v.optional(v.string()), limit: v.number() },
   handler: async (ctx, { cursor, limit }) => {
