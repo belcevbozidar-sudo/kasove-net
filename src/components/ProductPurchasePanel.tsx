@@ -103,28 +103,28 @@ export default function ProductPurchasePanel({
             </span>
           </div>
           
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 grid-cols-1">
             {bundleProducts.map((p) => {
               const discountedPrice = p.price * 0.8;
               return (
-                <div key={p.id} className="flex flex-col justify-between rounded-2xl border border-border-c bg-surface p-3 transition-all hover:border-accent/40 hover:shadow-sm">
-                  <div className="flex gap-3">
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border-c bg-white">
-                      <Image src={p.image} alt={p.name} fill sizes="56px" className="object-cover" />
+                <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-border-c bg-surface p-2.5 transition-all hover:border-accent/40 hover:shadow-sm">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border-c bg-white">
+                      <Image src={p.image} alt={p.name} fill sizes="48px" className="object-cover" />
                     </div>
-                    <div className="flex flex-col min-w-0">
-                      <h4 className="text-xs font-bold text-text line-clamp-2 leading-snug">
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <h4 className="text-xs font-bold text-text line-clamp-1 leading-tight">
                         {p.name}
                       </h4>
-                      <p className="text-[11px] text-text-muted mt-1">
-                        <span className="line-through">{formatPrice(p.price)}</span>{" "}
-                        <span className="font-bold text-accent-lime">{formatPrice(discountedPrice)}</span>
+                      <p className="text-[11px] text-text-muted mt-0.5">
+                        <span className="line-through mr-1.5">{formatPrice(p.price)}</span>
+                        <span className="font-extrabold text-accent-lime">{formatPrice(discountedPrice)}</span>
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => handleAddProtectorToCart(p)}
-                    className="mt-3 w-full rounded-xl bg-accent/10 py-1.5 text-xs font-bold text-accent hover:gradient-brand hover:text-white transition-all text-center cursor-pointer"
+                    className="shrink-0 rounded-lg bg-accent/10 px-3.5 py-1.5 text-xs font-bold text-accent hover:gradient-brand hover:text-white transition-all text-center cursor-pointer"
                   >
                     Добави
                   </button>
