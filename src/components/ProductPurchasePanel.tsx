@@ -31,12 +31,8 @@ export default function ProductPurchasePanel({
   }
 
   function handleAddProtectorToCart(protector: Product) {
-    const discountedPrice = protector.price * 0.8;
-    addItem({
-      ...protector,
-      price: discountedPrice,
-      name: `${protector.name} (-20% към кейс)`
-    }, 1);
+    addItem(product, quantity);
+    addItem(protector, 1, { id: product.id, bundleWith: protector.id, bundleDiscountPct: 20 });
     openDrawer();
   }
 
