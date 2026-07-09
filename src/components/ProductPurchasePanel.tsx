@@ -11,16 +11,18 @@ import { CheckIcon, MinusIcon, PlusIcon, ShieldIcon, TruckIcon, LockIcon } from 
 
 export default function ProductPurchasePanel({
   product,
-  bundleProduct,
+  bundleProducts = [],
 }: {
   product: Product;
-  bundleProduct?: Product;
+  bundleProducts?: Product[];
 }) {
   const { addItem, openDrawer } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [includeBundle, setIncludeBundle] = useState(Boolean(bundleProduct));
+  const [selectedBundleIndex, setSelectedBundleIndex] = useState(0);
+  const [includeBundle, setIncludeBundle] = useState(bundleProducts.length > 0);
   const [justAdded, setJustAdded] = useState(false);
 
+  const bundleProduct = bundleProducts[selectedBundleIndex];
   const brand = getBrand(product.brand);
   const discountPct = product.oldPrice ? Math.round(100 - (product.price / product.oldPrice) * 100) : null;
 
@@ -82,48 +84,71 @@ export default function ProductPurchasePanel({
       </ul>
 
       {bundleProduct && bundleDiscountedPrice !== null && (
-        <div className="rounded-2xl border border-accent/40 bg-gradient-to-br from-accent/10 to-accent-2/10 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="rounded-full gradient-brand px-2.5 py-1 text-[11px] font-semibold text-white">
-              Умна оферта
+        <div className="relative overflow-hidden rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-accent-2/5 p-5 shadow-sm transition-all hover:border-accent/50">
+          <div className="absolute top-0 inset-x-0 h-1 gradient-brand" />
+          
+          <div className="mb-4 flex items-center justify-between">
+            <span className="rounded-full gradient-brand px-3 py-1 text-[11px] font-bold text-white uppercase tracking-wider">
+              ✨ Специално предложение
             </span>
-            <span className="text-xs font-semibold text-accent-lime">
-              -{product.bundleDiscountPct || 20}% на протектора
+            <span className="text-xs font-bold text-accent-lime bg-accent-lime/10 px-2 py-0.5 rounded-md">
+              Спести 20%
             </span>
           </div>
 
-          <label className="flex cursor-pointer items-center gap-3">
+          <label className="flex cursor-pointer items-start gap-3.5">
             <input
               type="checkbox"
               checked={includeBundle}
               onChange={(e) => setIncludeBundle(e.target.checked)}
-              className="h-5 w-5 shrink-0 rounded accent-[var(--accent)]"
+              className="mt-1 h-5 w-5 shrink-0 rounded border-border-c accent-[var(--accent)] transition-all cursor-pointer"
             />
-            <div className="flex flex-1 items-center gap-3">
-              <div className="flex -space-x-3">
-                <div className="relative h-12 w-12 overflow-hidden rounded-xl border-2 border-surface bg-surface-2">
-                  <Image src={product.image} alt={product.name} fill sizes="48px" className="object-cover" />
+            <div className="flex flex-1 items-start gap-3">
+              <div className="flex -space-x-4 shrink-0">
+                <div className="relative h-14 w-14 overflow-hidden rounded-xl border-2 border-surface bg-surface-2 shadow-sm">
+                  <Image src={product.image} alt={product.name} fill sizes="56px" className="object-cover" />
                 </div>
-                <div className="relative h-12 w-12 overflow-hidden rounded-xl border-2 border-surface bg-surface-2">
-                  <Image src={bundleProduct.image} alt={bundleProduct.name} fill sizes="48px" className="object-cover" />
+                <div className="relative h-14 w-14 overflow-hidden rounded-xl border-2 border-surface bg-surface-2 shadow-sm">
+                  <Image src={bundleProduct.image} alt={bundleProduct.name} fill sizes="56px" className="object-cover" />
                 </div>
               </div>
               <div className="text-sm">
-                <p className="font-semibold leading-snug">Добави {bundleProduct.name}</p>
-                <p className="text-xs text-text-muted">
-                  <span className="line-through">{formatPrice(bundleProduct.price)}</span>{" "}
-                  <span className="font-semibold text-accent-lime">{formatPrice(bundleDiscountedPrice)}</span>
+                <p className="font-extrabold leading-snug text-text">Вземи и протектор за екрана</p>
+                <p className="text-xs text-text-muted mt-0.5">Добави към кейса и защити напълно телефона си с 20% отстъпка</p>
+                
+                <p className="mt-2 text-xs text-text-muted">
+                  Цена на протектора: <span className="line-through">{formatPrice(bundleProduct.price)}</span>{" "}
+                  <span className="font-bold text-accent-lime">{formatPrice(bundleDiscountedPrice)}</span>
                 </p>
               </div>
             </div>
           </label>
 
+          {bundleProducts.length > 1 && (
+            <div className="mt-4 border-t border-border-c/60 pt-3">
+              <label className="block text-[11px] font-bold text-text-muted mb-1.5 uppercase tracking-wide">
+                Избери модел протектор:
+              </label>
+              <select
+                value={selectedBundleIndex}
+                onChange={(e) => setSelectedBundleIndex(Number(e.target.value))}
+                className="w-full rounded-xl border border-border-c bg-white px-3 py-2 text-xs font-semibold text-text focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all cursor-pointer"
+              >
+                {bundleProducts.map((p, idx) => (
+                  <option key={p.id} value={idx}>
+                    {p.name} — {formatPrice(p.price * 0.8)} (вместо {formatPrice(p.price)})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {includeBundle && (
-            <div className="mt-3 flex items-center justify-between border-t border-accent/20 pt-3 text-sm">
-              <span className="text-text-muted">Общо за комплекта</span>
-              <span className="font-heading font-bold">
+            <div className="mt-4 flex items-center justify-between border-t border-accent/20 pt-3 text-sm">
+              <span className="font-semibold text-text-muted">Общо за комплекта:</span>
+              <span className="font-heading font-extrabold text-text">
                 {formatPrice(combinedTotal)}{" "}
-                <span className="text-xs font-normal text-success">(спестяваш {formatPrice(bundleSavingsTotal)})</span>
+                <span className="text-xs font-bold text-success ml-1">(спестяваш {formatPrice(bundleSavingsTotal)})</span>
               </span>
             </div>
           )}

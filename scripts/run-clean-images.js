@@ -9,7 +9,9 @@ try {
     if (parts.length >= 2) {
       const key = parts[0].trim();
       const val = parts.slice(1).join("=").trim().replace(/^['"]|['"]$/g, "");
-      process.env[key] = val;
+      if (!process.env[key]) {
+        process.env[key] = val;
+      }
     }
   }
 } catch (e) {

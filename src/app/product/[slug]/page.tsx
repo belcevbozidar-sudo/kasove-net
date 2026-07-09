@@ -5,7 +5,7 @@ import ProductPurchasePanel from "@/components/ProductPurchasePanel";
 import ProductTabs from "@/components/ProductTabs";
 import ProductRail from "@/components/ProductRail";
 import { getBrand, getCategory } from "@/lib/data";
-import { getBundleProduct, getProductBySlug, getRelatedProducts } from "@/lib/products-server";
+import { getBundleProducts, getProductBySlug, getRelatedProducts } from "@/lib/products-server";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -20,8 +20,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const brand = getBrand(product.brand);
   const category = getCategory(product.category);
-  const [bundleProduct, related] = await Promise.all([
-    getBundleProduct(product),
+  const [bundleProducts, related] = await Promise.all([
+    getBundleProducts(product),
     getRelatedProducts(product),
   ]);
 
@@ -35,7 +35,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
       <div className="grid gap-10 lg:grid-cols-2">
         <ProductGallery images={product.gallery} alt={product.name} />
-        <ProductPurchasePanel product={product} bundleProduct={bundleProduct} />
+        <ProductPurchasePanel product={product} bundleProducts={bundleProducts} />
       </div>
 
       <ProductTabs product={product} />
