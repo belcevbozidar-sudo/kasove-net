@@ -7,7 +7,7 @@ import { useCart } from "@/lib/cart-context";
 import { formatPrice, getBrand } from "@/lib/data";
 import type { Product } from "@/lib/types";
 import StarRating from "./StarRating";
-import { CheckIcon, MinusIcon, PlusIcon, ShieldIcon, TruckIcon, LockIcon } from "./Icons";
+import { CheckIcon, EyeIcon, MinusIcon, PlusIcon, ShieldIcon, TruckIcon, LockIcon } from "./Icons";
 
 export default function ProductPurchasePanel({
   product,
@@ -103,12 +103,16 @@ export default function ProductPurchasePanel({
             {bundleProducts.map((p) => {
               const discountedPrice = p.price * 0.8;
               return (
-                <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-border-c bg-surface p-2.5 transition-all hover:border-accent/40 hover:shadow-sm">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border-c bg-white">
-                      <Image src={p.image} alt={p.name} fill sizes="48px" className="object-cover" />
+                <div key={p.id} className="flex items-center justify-between gap-2 rounded-xl border border-border-c bg-surface p-2.5 transition-all hover:border-accent/40 hover:shadow-sm">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-border-c bg-white">
+                      <Image src={product.image} alt={product.name} fill sizes="44px" className="object-cover" />
                     </div>
-                    <div className="flex flex-col min-w-0 flex-1">
+                    <PlusIcon className="w-3.5 h-3.5 shrink-0 text-text-muted" />
+                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-border-c bg-white">
+                      <Image src={p.image} alt={p.name} fill sizes="44px" className="object-cover" />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1 ml-1">
                       <h4 className="text-xs font-bold text-text line-clamp-1 leading-tight">
                         {p.name}
                       </h4>
@@ -118,12 +122,21 @@ export default function ProductPurchasePanel({
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleAddProtectorToCart(p)}
-                    className="shrink-0 rounded-lg bg-accent/10 px-3.5 py-1.5 text-xs font-bold text-accent hover:gradient-brand hover:text-white transition-all text-center cursor-pointer"
-                  >
-                    Добави
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Link
+                      href={`/product/${p.slug}`}
+                      aria-label={`Разгледай ${p.name}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-c text-text-muted hover:border-accent/40 hover:text-accent transition-all"
+                    >
+                      <EyeIcon className="w-4 h-4" />
+                    </Link>
+                    <button
+                      onClick={() => handleAddProtectorToCart(p)}
+                      className="shrink-0 rounded-lg bg-accent/10 px-3.5 py-1.5 text-xs font-bold text-accent hover:gradient-brand hover:text-white transition-all text-center cursor-pointer"
+                    >
+                      Добави
+                    </button>
+                  </div>
                 </div>
               );
             })}
