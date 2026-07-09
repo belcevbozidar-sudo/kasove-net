@@ -140,7 +140,11 @@ export async function getBundleProducts(product: Product): Promise<Product[]> {
     if (!cleanedCaseModel) return [];
 
     // Split cleaned model name into keywords (e.g. "S24 Ultra" -> ["s24", "ultra"])
-    const modelWords = cleanedCaseModel.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+    // Filter out "5g" and "4g" since screen protectors often omit them
+    const modelWords = cleanedCaseModel
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(w => w.length > 0 && w !== "5g" && w !== "4g");
 
     // Fetch all protectors for this brand
     const result = await fetchQuery(api.products.list, {
