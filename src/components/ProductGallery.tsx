@@ -8,7 +8,7 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
   const gallery = images.length > 0 ? images : ["/images/case-clear.png"];
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 min-w-0 w-full overflow-hidden">
       <div className="relative aspect-square overflow-hidden rounded-3xl border border-border-c bg-surface">
         <Image src={gallery[active]} alt={alt} fill sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover" priority />
       </div>
