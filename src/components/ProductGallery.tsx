@@ -13,7 +13,7 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
         <Image src={gallery[active]} alt={alt} fill sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover" priority />
       </div>
       {gallery.length > 1 && (
-        <div className="flex gap-3">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
           {gallery.map((img, i) => (
             <button
               key={img + i}
