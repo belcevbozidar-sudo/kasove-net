@@ -18,35 +18,26 @@ export default function ProductPurchasePanel({
 }) {
   const { addItem, openDrawer } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [selectedBundleIndex, setSelectedBundleIndex] = useState(0);
-  const [includeBundle, setIncludeBundle] = useState(bundleProducts.length > 0);
   const [justAdded, setJustAdded] = useState(false);
 
-  const bundleProduct = bundleProducts[selectedBundleIndex];
   const brand = getBrand(product.brand);
   const discountPct = product.oldPrice ? Math.round(100 - (product.price / product.oldPrice) * 100) : null;
 
-  const bundleDiscountedPrice = useMemo(() => {
-    if (!bundleProduct) return null;
-    const discount = product.bundleDiscountPct || 20;
-    return bundleProduct.price * (1 - discount / 100);
-  }, [bundleProduct, product.bundleDiscountPct]);
-
-  const combinedTotal =
-    product.price * quantity + (includeBundle && bundleDiscountedPrice !== null ? bundleDiscountedPrice * quantity : 0);
-  const bundleSavingsTotal =
-    includeBundle && bundleProduct && bundleDiscountedPrice !== null
-      ? (bundleProduct.price - bundleDiscountedPrice) * quantity
-      : 0;
-
   function handleAddToCart() {
     addItem(product, quantity);
-    if (bundleProduct && includeBundle) {
-      addItem(bundleProduct, quantity, product);
-    }
     setJustAdded(true);
     openDrawer();
     window.setTimeout(() => setJustAdded(false), 2000);
+  }
+
+  function handleAddProtectorToCart(protector: Product) {
+    const discountedPrice = protector.price * 0.8;
+    addItem({
+      ...protector,
+      price: discountedPrice,
+      name: `${protector.name} (-20% към кейс)`
+    }, 1);
+    openDrawer();
   }
 
   return (
@@ -83,78 +74,6 @@ export default function ProductPurchasePanel({
         ))}
       </ul>
 
-      {bundleProduct && bundleDiscountedPrice !== null && (
-        <div className="relative overflow-hidden rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-accent-2/5 p-5 shadow-sm transition-all hover:border-accent/50">
-          <div className="absolute top-0 inset-x-0 h-1 gradient-brand" />
-          
-          <div className="mb-4 flex items-center justify-between">
-            <span className="rounded-full gradient-brand px-3 py-1 text-[11px] font-bold text-white uppercase tracking-wider">
-              ✨ Специално предложение
-            </span>
-            <span className="text-xs font-bold text-accent-lime bg-accent-lime/10 px-2 py-0.5 rounded-md">
-              Спести 20%
-            </span>
-          </div>
-
-          <label className="flex cursor-pointer items-start gap-3.5">
-            <input
-              type="checkbox"
-              checked={includeBundle}
-              onChange={(e) => setIncludeBundle(e.target.checked)}
-              className="mt-1 h-5 w-5 shrink-0 rounded border-border-c accent-[var(--accent)] transition-all cursor-pointer"
-            />
-            <div className="flex flex-1 items-start gap-3">
-              <div className="flex -space-x-4 shrink-0">
-                <div className="relative h-14 w-14 overflow-hidden rounded-xl border-2 border-surface bg-surface-2 shadow-sm">
-                  <Image src={product.image} alt={product.name} fill sizes="56px" className="object-cover" />
-                </div>
-                <div className="relative h-14 w-14 overflow-hidden rounded-xl border-2 border-surface bg-surface-2 shadow-sm">
-                  <Image src={bundleProduct.image} alt={bundleProduct.name} fill sizes="56px" className="object-cover" />
-                </div>
-              </div>
-              <div className="text-sm">
-                <p className="font-extrabold leading-snug text-text">Вземи и протектор за екрана</p>
-                <p className="text-xs text-text-muted mt-0.5">Добави към кейса и защити напълно телефона си с 20% отстъпка</p>
-                
-                <p className="mt-2 text-xs text-text-muted">
-                  Цена на протектора: <span className="line-through">{formatPrice(bundleProduct.price)}</span>{" "}
-                  <span className="font-bold text-accent-lime">{formatPrice(bundleDiscountedPrice)}</span>
-                </p>
-              </div>
-            </div>
-          </label>
-
-          {bundleProducts.length > 1 && (
-            <div className="mt-4 border-t border-border-c/60 pt-3">
-              <label className="block text-[11px] font-bold text-text-muted mb-1.5 uppercase tracking-wide">
-                Избери модел протектор:
-              </label>
-              <select
-                value={selectedBundleIndex}
-                onChange={(e) => setSelectedBundleIndex(Number(e.target.value))}
-                className="w-full rounded-xl border border-border-c bg-white px-3 py-2 text-xs font-semibold text-text focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all cursor-pointer"
-              >
-                {bundleProducts.map((p, idx) => (
-                  <option key={p.id} value={idx}>
-                    {p.name} — {formatPrice(p.price * 0.8)} (вместо {formatPrice(p.price)})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {includeBundle && (
-            <div className="mt-4 flex items-center justify-between border-t border-accent/20 pt-3 text-sm">
-              <span className="font-semibold text-text-muted">Общо за комплекта:</span>
-              <span className="font-heading font-extrabold text-text">
-                {formatPrice(combinedTotal)}{" "}
-                <span className="text-xs font-bold text-success ml-1">(спестяваш {formatPrice(bundleSavingsTotal)})</span>
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3 rounded-full border border-border-c px-3 py-2">
           <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} aria-label="Намали" className="text-text-muted hover:text-text">
@@ -169,9 +88,52 @@ export default function ProductPurchasePanel({
           onClick={handleAddToCart}
           className="hidden flex-1 rounded-full gradient-brand py-3.5 text-sm font-semibold text-white transition-transform active:scale-[0.98] hover:brightness-110 sm:block"
         >
-          {justAdded ? "Добавено ✓" : `Добави в количката · ${formatPrice(combinedTotal)}`}
+          {justAdded ? "Добавено ✓" : `Добави в количката · ${formatPrice(product.price * quantity)}`}
         </button>
       </div>
+
+      {bundleProducts.length > 0 && (
+        <div className="mt-4 border-t border-border-c pt-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-heading text-sm font-extrabold uppercase tracking-wide text-text flex items-center gap-1.5">
+              🛡️ Купете и протектор:
+            </h3>
+            <span className="rounded-full bg-accent-lime/10 px-2.5 py-0.5 text-[10px] font-bold text-accent-lime uppercase tracking-wider">
+              Спести 20%
+            </span>
+          </div>
+          
+          <div className="grid gap-3 sm:grid-cols-2">
+            {bundleProducts.map((p) => {
+              const discountedPrice = p.price * 0.8;
+              return (
+                <div key={p.id} className="flex flex-col justify-between rounded-2xl border border-border-c bg-surface p-3 transition-all hover:border-accent/40 hover:shadow-sm">
+                  <div className="flex gap-3">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border-c bg-white">
+                      <Image src={p.image} alt={p.name} fill sizes="56px" className="object-cover" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <h4 className="text-xs font-bold text-text line-clamp-2 leading-snug">
+                        {p.name}
+                      </h4>
+                      <p className="text-[11px] text-text-muted mt-1">
+                        <span className="line-through">{formatPrice(p.price)}</span>{" "}
+                        <span className="font-bold text-accent-lime">{formatPrice(discountedPrice)}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleAddProtectorToCart(p)}
+                    className="mt-3 w-full rounded-xl bg-accent-lime/10 py-1.5 text-xs font-bold text-accent-lime hover:bg-accent-lime hover:text-white transition-all text-center"
+                  >
+                    Добави
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-2 text-center text-[11px] text-text-muted">
         <div className="flex flex-col items-center gap-1.5 rounded-xl border border-border-c p-3">
@@ -189,7 +151,7 @@ export default function ProductPurchasePanel({
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-border-c bg-surface/95 p-3 backdrop-blur sm:hidden">
         <div className="flex flex-col leading-tight">
           <span className="text-[11px] text-text-muted">Общо</span>
-          <span className="font-heading text-lg font-bold">{formatPrice(combinedTotal)}</span>
+          <span className="font-heading text-lg font-bold">{formatPrice(product.price * quantity)}</span>
         </div>
         <button
           onClick={handleAddToCart}
