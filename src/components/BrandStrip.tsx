@@ -14,7 +14,7 @@ export default function BrandStrip() {
               <Link
                 key={b.slug}
                 href={`/brand/${b.slug}`}
-                className="group relative flex aspect-[1.3/1] flex-col items-center justify-between rounded-3xl border border-zinc-800/80 bg-zinc-950 p-5 shadow-lg hover:shadow-2xl hover:border-zinc-700/80 transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.03] overflow-hidden"
+                className="group relative flex aspect-[1.45/1] flex-col items-center justify-between rounded-[2rem] border border-zinc-800/80 bg-zinc-950 p-6 shadow-xl hover:shadow-2xl hover:border-zinc-700/80 transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.03] overflow-hidden"
                 title={b.name}
               >
                 {/* Generated Brand Image Background */}
@@ -25,15 +25,16 @@ export default function BrandStrip() {
                 />
 
                 {/* Dark gradient overlay for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
 
                 <div className="relative z-10 flex-1 flex items-center justify-center w-full" />
 
                 {/* Text label underneath */}
-                <span className="relative z-10 text-xs font-black uppercase tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] mt-auto group-hover:text-accent transition-colors duration-300">
+                <span className="relative z-10 text-sm font-black uppercase tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] mt-auto group-hover:text-accent transition-colors duration-300">
                   {b.name}
                 </span>
               </Link>
+
             );
           })}
       </div>

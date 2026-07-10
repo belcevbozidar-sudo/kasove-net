@@ -35,17 +35,18 @@ export default function BrandModelSelector({ brandSlug, brandName, models, categ
       </div>
 
       {/* Models Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-x-2 gap-y-1">
         {visibleModels.map((m) => (
           <button
             key={m}
             onClick={() => handleSelectModel(m)}
-            className="rounded-2xl border border-border-c/80 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 p-3.5 text-xs font-bold text-center text-text hover:text-accent transition-all shadow-sm hover:shadow hover:-translate-y-0.5 cursor-pointer block truncate"
+            className="text-left text-xs font-bold text-text/90 hover:text-accent hover:bg-accent/5 py-2 px-2.5 rounded-xl transition-all cursor-pointer block truncate border border-transparent hover:border-accent/10"
           >
             {m}
           </button>
         ))}
       </div>
+
 
       {/* Show All Toggle */}
       {models.length > 24 && !showAll && (
