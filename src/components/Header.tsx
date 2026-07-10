@@ -10,10 +10,13 @@ import CartDrawer from "./CartDrawer";
 import brandModelsData from "@/lib/models.json";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { categoryMenuData } from "@/lib/category-menu-data";
 
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeMenuCat, setActiveMenuCat] = useState("gsm-accessories");
+
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const { itemCount, openDrawer } = useCart();
@@ -132,6 +135,89 @@ export default function Header() {
               >
                 <SearchIcon className="w-5 h-5" />
               </button>
+              {/* Categories Dropdown Menu Button (Desktop only) */}
+              <div className="hidden lg:block group relative">
+                <button className="flex items-center gap-1.5 rounded-xl border border-border-c bg-surface px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-text hover:text-accent hover:border-accent transition-all cursor-pointer">
+                  <svg className="w-4 h-4 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                  <span>Категории</span>
+                  <svg className="w-2.5 h-2.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Mega Menu Flyout Panel */}
+                <div className="absolute right-0 top-full z-[120] pt-2.5 hidden group-hover:block animate-fade-in">
+                  <div className="w-[52rem] rounded-3xl border border-border-c bg-surface shadow-2xl overflow-hidden flex h-[480px]">
+                    {/* Left side list of main categories */}
+                    <div className="w-[20rem] border-r border-border-c overflow-y-auto scrollbar-thin py-3 bg-surface-2/30">
+                      {categoryMenuData.map((cat) => (
+                        <Link
+                          key={cat.slug}
+                          href={cat.href}
+                          onMouseEnter={() => setActiveMenuCat(cat.slug)}
+                          className={`flex items-center justify-between px-5 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider transition-all border-l-2 ${
+                            activeMenuCat === cat.slug
+                              ? "border-accent bg-accent/5 text-accent"
+                              : "border-transparent text-text hover:bg-surface-2"
+                          }`}
+                        >
+                          <span>{cat.name}</span>
+                          {cat.subcategories && cat.subcategories.length > 0 && (
+                            <svg className="w-3.5 h-3.5 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7-7" />
+                            </svg>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+
+                    {/* Right side list of subcategories */}
+                    <div className="flex-1 overflow-y-auto p-6 bg-surface">
+                      {(() => {
+                        const activeCatData = categoryMenuData.find(c => c.slug === activeMenuCat);
+                        if (!activeCatData) return null;
+
+                        return (
+                          <div className="animate-fade-in">
+                            <h4 className="text-xs font-extrabold text-accent uppercase tracking-widest mb-4 border-b border-border-c pb-2 text-left">
+                              {activeCatData.name}
+                            </h4>
+                            {activeCatData.subcategories && activeCatData.subcategories.length > 0 ? (
+                              <div className="grid grid-cols-2 gap-2.5">
+                                {activeCatData.subcategories.map((sub) => (
+                                  <Link
+                                    key={sub.name}
+                                    href={sub.href}
+                                    className="text-xs font-bold text-text hover:text-accent border border-border-c/75 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-3 px-4 rounded-xl transition-all text-left flex items-center justify-between group/sub"
+                                  >
+                                    <span>{sub.name}</span>
+                                    <svg className="w-3.5 h-3.5 text-text-muted group-hover\/sub:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7-7" />
+                                    </svg>
+                                  </Link>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center h-64 text-center">
+                                <p className="text-sm text-text-muted font-bold">Няма допълнителни подкатегории</p>
+                                <Link
+                                  href={activeCatData.href}
+                                  className="mt-4 rounded-full gradient-brand px-6 py-2.5 text-xs font-extrabold text-white shadow-md hover:scale-[1.02] transition-all"
+                                >
+                                  Разгледай всички продукти
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <button onClick={openDrawer} className="relative rounded-lg p-2 hover:bg-surface" aria-label="Количка">
                 <CartIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                 {itemCount > 0 && (
