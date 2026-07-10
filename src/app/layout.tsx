@@ -5,6 +5,7 @@ import { CartProvider } from "@/lib/cart-context";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DiscountBanner from "@/components/DiscountBanner";
+import ConvexClientProvider from "@/components/ConvexClientProvider";
 
 
 const heading = Montserrat({
@@ -36,14 +37,16 @@ export default function RootLayout({
       className={`${heading.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-text">
-        <CartProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <DiscountBanner />
-        </CartProvider>
-
+        <ConvexClientProvider>
+          <CartProvider>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <DiscountBanner />
+          </CartProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );
 }
+
