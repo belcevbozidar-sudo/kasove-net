@@ -16,6 +16,7 @@ import { categoryMenuData } from "@/lib/category-menu-data";
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMenuCat, setActiveMenuCat] = useState("gsm-accessories");
+  const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -236,12 +237,16 @@ export default function Header() {
                 .filter((b) => b.slug !== "diecast-cars" && b.slug !== "other")
                 .map((b) => {
                   const bModels = (brandModelsData as Record<string, string[]>)[b.slug] || [];
-                  const isLeftEdge = b.slug === "apple" || b.slug === "samsung";
-                  const dropdownAlignClass = isLeftEdge ? "left-0" : "left-1/2 -translate-x-1/2";
                   return (
-                    <div key={b.slug} className="group py-4">
+                    <div
+                      key={b.slug}
+                      className="group py-4"
+                      onMouseEnter={() => setHoveredMenu(b.slug)}
+                      onMouseLeave={() => setHoveredMenu(null)}
+                    >
                       <Link
                         href={`/brand/${b.slug}`}
+                        onClick={() => setHoveredMenu(null)}
                         className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                       >
                         {b.name}
@@ -252,7 +257,7 @@ export default function Header() {
 
                       {/* Dropdown Menu */}
                       {bModels.length > 0 && (
-                        <div className="absolute left-0 right-0 w-full top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                        <div className={`absolute left-0 right-0 w-full top-full z-[100] pt-2 ${hoveredMenu === b.slug ? "block" : "hidden"} animate-fade-in`}>
                           <div className="w-full rounded-3xl border border-border-c bg-surface p-6 shadow-2xl">
                             <p className="text-sm font-extrabold text-accent uppercase tracking-wider mb-4 border-b border-border-c pb-2 text-left">
                               Популярни модели {b.name}
@@ -262,6 +267,7 @@ export default function Header() {
                                 <Link
                                   key={m}
                                   href={`/shop?brand=${b.slug}&model=${encodeURIComponent(m)}`}
+                                  onClick={() => setHoveredMenu(null)}
                                   className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                                 >
                                   • {m}
@@ -276,9 +282,14 @@ export default function Header() {
                 })}
 
               {/* Brand "Други" (Others) */}
-              <div className="group py-4">
+              <div
+                className="group py-4"
+                onMouseEnter={() => setHoveredMenu("other")}
+                onMouseLeave={() => setHoveredMenu(null)}
+              >
                 <Link
                   href="/shop?brand=other"
+                  onClick={() => setHoveredMenu(null)}
                   className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                 >
                   Други
@@ -288,7 +299,7 @@ export default function Header() {
                 </Link>
                 
                 {/* Dropdown of other brands */}
-                <div className="absolute left-0 right-0 w-full top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                <div className={`absolute left-0 right-0 w-full top-full z-[100] pt-2 ${hoveredMenu === "other" ? "block" : "hidden"} animate-fade-in`}>
                   <div className="w-full rounded-3xl border border-border-c bg-surface p-6 shadow-2xl">
                     <p className="text-sm font-extrabold text-accent uppercase tracking-wider mb-4 border-b border-border-c pb-2 text-left">
                       Други марки телефони
@@ -303,6 +314,7 @@ export default function Header() {
                           <Link
                             key={ob.slug}
                             href={`/brand/${ob.slug}`}
+                            onClick={() => setHoveredMenu(null)}
                             className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                           >
                             • {ob.name}
@@ -314,9 +326,14 @@ export default function Header() {
               </div>
 
               {/* Аксесоари (Accessories) */}
-              <div className="group py-4">
+              <div
+                className="group py-4"
+                onMouseEnter={() => setHoveredMenu("accessories")}
+                onMouseLeave={() => setHoveredMenu(null)}
+              >
                 <Link
                   href="/shop"
+                  onClick={() => setHoveredMenu(null)}
                   className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                 >
                   Аксесоари
@@ -325,7 +342,7 @@ export default function Header() {
                   </svg>
                 </Link>
 
-                <div className="absolute left-0 right-0 w-full top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                <div className={`absolute left-0 right-0 w-full top-full z-[100] pt-2 ${hoveredMenu === "accessories" ? "block" : "hidden"} animate-fade-in`}>
                   <div className="w-full rounded-3xl border border-border-c bg-surface p-6 shadow-2xl">
                     <p className="text-sm font-extrabold text-accent uppercase tracking-wider mb-4 border-b border-border-c pb-2 text-left">
                       Категории аксесоари
@@ -335,6 +352,7 @@ export default function Header() {
                         <Link
                           key={c.slug}
                           href={`/shop?category=${c.slug}`}
+                          onClick={() => setHoveredMenu(null)}
                           className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                         >
                           • {c.name}
@@ -346,9 +364,14 @@ export default function Header() {
               </div>
 
               {/* Метални колички (Diecast Cars) */}
-              <div className="group relative py-4">
+              <div
+                className="group relative py-4"
+                onMouseEnter={() => setHoveredMenu("diecast-cars")}
+                onMouseLeave={() => setHoveredMenu(null)}
+              >
                 <Link
                   href="/shop?brand=diecast-cars"
+                  onClick={() => setHoveredMenu(null)}
                   className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                 >
                   Метални колички
@@ -357,7 +380,7 @@ export default function Header() {
                   </svg>
                 </Link>
 
-                <div className="absolute right-0 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                <div className={`absolute right-0 top-full z-[100] pt-2 ${hoveredMenu === "diecast-cars" ? "block" : "hidden"} animate-fade-in`}>
                   <div className="w-72 rounded-3xl border border-border-c bg-surface p-4 shadow-2xl">
                     <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3 border-b border-border-c pb-1.5 px-2 text-left">
                       Мащаби макети
@@ -372,6 +395,7 @@ export default function Header() {
                         <Link
                           key={sc.label}
                           href={sc.href}
+                          onClick={() => setHoveredMenu(null)}
                           className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                         >
                           • {sc.label}
@@ -383,9 +407,14 @@ export default function Header() {
               </div>
 
               {/* Всички продукти (All products) */}
-              <div className="group relative py-4">
+              <div
+                className="group relative py-4"
+                onMouseEnter={() => setHoveredMenu("all-products")}
+                onMouseLeave={() => setHoveredMenu(null)}
+              >
                 <Link
                   href="/shop"
+                  onClick={() => setHoveredMenu(null)}
                   className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1 font-extrabold text-accent"
                 >
                   Всички продукти
@@ -394,7 +423,7 @@ export default function Header() {
                   </svg>
                 </Link>
 
-                <div className="absolute right-0 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                <div className={`absolute right-0 top-full z-[100] pt-2 ${hoveredMenu === "all-products" ? "block" : "hidden"} animate-fade-in`}>
                   <div className="w-64 rounded-3xl border border-border-c bg-surface p-4 shadow-2xl">
                     <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3 border-b border-border-c pb-1.5 px-2 text-left">
                       Бързи линкове
@@ -408,6 +437,7 @@ export default function Header() {
                         <Link
                           key={l.label}
                           href={l.href}
+                          onClick={() => setHoveredMenu(null)}
                           className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                         >
                           • {l.label}

@@ -11,6 +11,26 @@ function facetKey(category?: string, brand?: string) {
   return `${category ?? "all"}|${brand ?? "all"}`;
 }
 
+function getModelVariations(model: string, brand: string): string[] {
+  const variations = new Set<string>();
+  variations.add(model);
+  
+  const brandCapitalized = brand.charAt(0).toUpperCase() + brand.slice(1);
+  const brandRegex = new RegExp(`^${brand}\\s+`, "i");
+  let cleanModel = model.replace(brandRegex, "");
+  
+  cleanModel = cleanModel.replace(/^galaxy\s+/i, "");
+  cleanModel = cleanModel.trim();
+  
+  variations.add(cleanModel);
+  variations.add(`${brandCapitalized} ${cleanModel}`);
+  variations.add(`${brandCapitalized} Galaxy ${cleanModel}`);
+  variations.add(`Galaxy ${cleanModel}`);
+  
+  return Array.from(variations).filter(v => v.length > 0);
+}
+
+
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
@@ -88,17 +108,41 @@ export const list = query({
           .take(1000);
         products = searchResults;
       } else if (brand && model && model !== "all") {
-        const modelProducts = await ctx.db
-          .query("products")
-          .withIndex("by_brand_model", (qq) => qq.eq("brand", brand).eq("model", model))
-          .collect();
-        products = category ? modelProducts.filter((p) => p.category === category) : modelProducts;
+        const variations = getModelVariations(model, brand);
+        const allModelProducts = [];
+        const seenIds = new Set<string>();
+        
+        for (const variant of variations) {
+          const docs = await ctx.db
+            .query("products")
+            .withIndex("by_brand_model", (qq) => qq.eq("brand", brand).eq("model", variant))
+            .collect();
+          for (const doc of docs) {
+            if (!seenIds.has(doc._id)) {
+              seenIds.add(doc._id);
+              allModelProducts.push(doc);
+            }
+          }
+        }
+        products = category ? allModelProducts.filter((p) => p.category === category) : allModelProducts;
       } else if (model && model !== "all") {
-        const modelProducts = await ctx.db
-          .query("products")
-          .withIndex("by_model", (qq) => qq.eq("model", model))
-          .collect();
-        products = category ? modelProducts.filter((p) => p.category === category) : modelProducts;
+        const variations = getModelVariations(model, brand || "universal");
+        const allModelProducts = [];
+        const seenIds = new Set<string>();
+        
+        for (const variant of variations) {
+          const docs = await ctx.db
+            .query("products")
+            .withIndex("by_model", (qq) => qq.eq("model", variant))
+            .collect();
+          for (const doc of docs) {
+            if (!seenIds.has(doc._id)) {
+              seenIds.add(doc._id);
+              allModelProducts.push(doc);
+            }
+          }
+        }
+        products = category ? allModelProducts.filter((p) => p.category === category) : allModelProducts;
       } else if (category && brand) {
         products = await ctx.db
           .query("products")
