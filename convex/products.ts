@@ -671,3 +671,21 @@ export const adminDeleteProduct = mutation({
     await adjustFacetCount(ctx.db, existing.category, existing.brand, -1);
   },
 });
+
+export const getManyBySlugs = query({
+  args: { slugs: v.array(v.string()) },
+  handler: async (ctx, { slugs }) => {
+    const results = [];
+    for (const slug of slugs) {
+      const doc = await ctx.db
+        .query("products")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .unique();
+      if (doc) {
+        results.push(doc);
+      }
+    }
+    return results;
+  },
+});
+

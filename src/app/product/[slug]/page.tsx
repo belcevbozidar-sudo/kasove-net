@@ -4,6 +4,7 @@ import ProductGallery from "@/components/ProductGallery";
 import ProductPurchasePanel from "@/components/ProductPurchasePanel";
 import ProductTabs from "@/components/ProductTabs";
 import ProductRail from "@/components/ProductRail";
+import RecentlyViewed from "@/components/RecentlyViewed";
 import { getBrand, getCategory } from "@/lib/data";
 import { getBundleProducts, getProductBySlug, getRelatedProducts } from "@/lib/products-server";
 
@@ -41,6 +42,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <ProductTabs product={product} />
 
       <ProductRail eyebrow="Може да хареса" title="Свързани продукти" products={related} />
+      <RecentlyViewed currentSlug={product.slug} />
     </div>
   );
 }
+
