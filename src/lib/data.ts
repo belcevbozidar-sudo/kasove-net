@@ -54,8 +54,8 @@ export const categories: Category[] = [
   { slug: "car-stands", name: "Стойки за кола", shortName: "Стойки кола", icon: "stand" },
 ];
 
-export const FREE_SHIPPING_THRESHOLD = 60; // 60 BGN (formatted to EUR/BGN split)
-export const DEFAULT_SHIPPING_FEE = 6.95; // 6.95 BGN (formatted to EUR/BGN split)
+export const FREE_SHIPPING_THRESHOLD = 45.50; // 89 BGN (formatted to EUR/BGN split)
+export const DEFAULT_SHIPPING_FEE = 3.55; // 6.95 BGN (formatted to EUR/BGN split)
 
 
 export function formatPrice(value: number): string {

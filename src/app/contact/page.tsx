@@ -21,17 +21,18 @@ export default function ContactPage() {
             <p className="font-semibold">bojidar453@abv.bg</p>
           </div>
           <div className="rounded-2xl border border-border-c bg-surface p-5">
-            <p className="text-xs text-text-muted">Телефон</p>
-            <p className="font-semibold">+359 88 123 4567</p>
+            <p className="text-xs text-text-muted">Телефон за поръчки</p>
+            <p className="font-semibold">0893/66 47 99</p>
           </div>
           <div className="rounded-2xl border border-border-c bg-surface p-5">
-            <p className="text-xs text-text-muted">Адрес</p>
-            <p className="font-semibold">гр. София, бул. Витоша 100</p>
+            <p className="text-xs text-text-muted">Физически магазин</p>
+            <p className="font-semibold">Няма физически магазин (само онлайн поръчки)</p>
           </div>
           <div className="rounded-2xl border border-border-c bg-surface p-5">
             <p className="text-xs text-text-muted">Работно време</p>
-            <p className="font-semibold">Пон–Пет, 09:00–18:00ч.</p>
+            <p className="font-semibold">Пон-Пет: 10:00 - 19:00ч. | Събота: 10:00 - 17:30ч.</p>
           </div>
+
         </div>
 
         <div className="lg:col-span-3">

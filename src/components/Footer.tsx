@@ -53,6 +53,10 @@ export default function Footer() {
           <p className="mt-3 text-sm text-text-muted leading-relaxed">
             Оригинални калъфи, протектори и GSM аксесоари за всички водещи марки телефони. Бързо, сигурно и на изгодни бъндел цени.
           </p>
+          <div className="mt-4 text-xs text-text-muted space-y-1">
+            <p><strong>Тел:</strong> <a href="tel:0893664799" className="hover:text-accent-lime">0893/66 47 99</a></p>
+            <p><strong>Email:</strong> <a href="mailto:bojidar453@abv.bg" className="hover:text-accent-lime">bojidar453@abv.bg</a></p>
+          </div>
         </div>
 
         <div>
@@ -92,13 +96,15 @@ export default function Footer() {
         </div>
 
         <div>
-          <h4 className="mb-3 text-sm font-semibold">Контакти</h4>
+          <h4 className="mb-3 text-sm font-semibold">Политики</h4>
           <ul className="space-y-2 text-sm text-text-muted">
-            <li>bojidar453@abv.bg</li>
-            <li>+359 88 123 4567</li>
-            <li>София, България</li>
+            <li><Link href="/terms" className="hover:text-accent-lime transition-colors">Общи условия</Link></li>
+            <li><Link href="/privacy" className="hover:text-accent-lime transition-colors">Лични данни (GDPR)</Link></li>
+            <li><Link href="/returns" className="hover:text-accent-lime transition-colors">Връщане на продукти</Link></li>
+            <li><Link href="/cookies" className="hover:text-accent-lime transition-colors">Бисквитки</Link></li>
           </ul>
         </div>
+
       </div>
 
       <div className="border-t border-border-c">
