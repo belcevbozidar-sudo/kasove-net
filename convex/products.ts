@@ -108,7 +108,7 @@ export const list = query({
         if (maxPrice !== undefined) {
           products = await ctx.db
             .query("products")
-            .withIndex("by_category_price", (qq) => qq.eq("category", category).le("price", maxPrice))
+            .withIndex("by_category_price", (qq) => qq.eq("category", category).lte("price", maxPrice))
             .collect();
         } else {
           products = await ctx.db
@@ -120,7 +120,7 @@ export const list = query({
         if (maxPrice !== undefined) {
           products = await ctx.db
             .query("products")
-            .withIndex("by_brand_price", (qq) => qq.eq("brand", brand).le("price", maxPrice))
+            .withIndex("by_brand_price", (qq) => qq.eq("brand", brand).lte("price", maxPrice))
             .collect();
         } else {
           products = await ctx.db
@@ -132,7 +132,7 @@ export const list = query({
         if (maxPrice !== undefined) {
           products = await ctx.db
             .query("products")
-            .withIndex("by_price", (qq) => qq.le("price", maxPrice))
+            .withIndex("by_price", (qq) => qq.lte("price", maxPrice))
             .collect();
         } else {
           products = await ctx.db.query("products").collect();
