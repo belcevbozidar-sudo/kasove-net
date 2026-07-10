@@ -24,7 +24,10 @@ export type BrandSlug =
   | "cat"
   | "acer"
   | "meizu"
-  | "universal";
+  | "universal"
+  | "other"
+  | "diecast-cars";
+
 
 export interface Brand {
   slug: BrandSlug;

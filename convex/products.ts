@@ -50,11 +50,12 @@ export const list = query({
     q: v.optional(v.string()),
     scale: v.optional(v.string()),
     model: v.optional(v.string()),
+    maxPrice: v.optional(v.number()),
     paginationOpts: paginationOptsValidator,
   },
-  handler: async (ctx, { category, brand, sort, q, scale, model, paginationOpts }) => {
-    // If scale or model is specified, filter in-memory
-    if ((scale && scale !== "all") || (model && model !== "all")) {
+  handler: async (ctx, { category, brand, sort, q, scale, model, maxPrice, paginationOpts }) => {
+    // If scale, model or maxPrice is specified, filter in-memory
+    if ((scale && scale !== "all") || (model && model !== "all") || maxPrice !== undefined) {
       const scaleNum = scale ? (scale.split(":")[1] || scale) : null;
       const matchesScale = (name: string) => {
         if (!scaleNum) return true;
@@ -67,6 +68,11 @@ export const list = query({
           p.model === model ||
           p.name.toLowerCase().includes(model.toLowerCase())
         );
+      };
+
+      const matchesPrice = (p: Doc<"products">) => {
+        if (maxPrice === undefined) return true;
+        return p.price <= maxPrice;
       };
 
       let products: Doc<"products">[] = [];
@@ -100,7 +106,7 @@ export const list = query({
         products = await ctx.db.query("products").collect();
       }
 
-      const filtered = products.filter((p) => matchesScale(p.name) && matchesModel(p));
+      const filtered = products.filter((p) => matchesScale(p.name) && matchesModel(p) && matchesPrice(p));
 
       const sorted = [...filtered].sort((a, b) => {
         if (sort === "price-asc") return a.price - b.price;
@@ -108,6 +114,7 @@ export const list = query({
         if (sort === "rating") return b.rating - a.rating;
         return b._creationTime - a._creationTime;
       });
+
 
       const start = paginationOpts.cursor ? parseInt(paginationOpts.cursor, 10) : 0;
       const end = start + paginationOpts.numItems;

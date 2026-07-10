@@ -200,6 +200,7 @@ export interface FilterOptions {
   q?: string;
   scale?: string;
   model?: string;
+  maxPrice?: number;
   cursor?: string | null;
   numItems?: number;
 }
@@ -222,11 +223,13 @@ export async function filterProducts(opts: FilterOptions): Promise<FilterResult>
     q: opts.q || undefined,
     scale: opts.scale && opts.scale !== "all" ? opts.scale : undefined,
     model: opts.model && opts.model !== "all" ? opts.model : undefined,
+    maxPrice: opts.maxPrice || undefined,
     paginationOpts: {
       numItems: opts.numItems ?? 24,
       cursor: opts.cursor ?? null,
     },
   });
+
 
   return {
     products: result.page.map(toProduct),

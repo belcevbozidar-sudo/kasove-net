@@ -81,24 +81,19 @@ export default function Header() {
                 </Link>
               ))}
               <span className="ml-auto h-4 w-px bg-border-c" />
-              {categories.slice(0, 4).map((c) => (
-                <Link key={c.slug} href={`/shop?category=${c.slug}`} className="text-text-muted hover:text-accent-lime transition-colors">
+              {categories.map((c) => (
+                <Link key={c.slug} href={`/shop?category=${c.slug}`} className="text-text-muted hover:text-accent-lime transition-colors text-xs font-semibold whitespace-nowrap">
                   {c.shortName}
                 </Link>
               ))}
-              <Link href="/shop?category=toys" className="font-bold text-accent-lime hover:brightness-110 flex items-center gap-1 transition-all">
-                Играчки
-                <span className="rounded bg-accent-lime px-1 py-0.5 text-[9px] font-extrabold text-bg uppercase tracking-wider animate-pulse">
-                  Хит
-                </span>
-              </Link>
-              <Link href="/shop" className="font-semibold text-text hover:text-accent-lime">
+              <Link href="/shop" className="font-bold text-text hover:text-accent-lime text-xs whitespace-nowrap">
                 Всички продукти
               </Link>
             </div>
           </nav>
         </div>
       </div>
+
 
       {mobileOpen && (
         <div className="fixed inset-0 z-[70] lg:hidden">
