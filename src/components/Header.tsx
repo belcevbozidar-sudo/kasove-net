@@ -144,7 +144,7 @@ export default function Header() {
           </div>
 
           <nav className="hidden lg:block border-t border-border-c bg-surface/90 backdrop-blur-md">
-            <div className="mx-auto flex max-w-7xl items-center justify-between container-p py-0 text-[13px] font-extrabold uppercase tracking-wide text-text">
+            <div className="mx-auto flex max-w-7xl items-center justify-between container-p py-0 text-[13px] font-extrabold uppercase tracking-wide text-text relative">
               {/* Phone Brands (Main) */}
               {brands
                 .filter((b) => b.slug !== "diecast-cars" && b.slug !== "other")
@@ -153,7 +153,7 @@ export default function Header() {
                   const isLeftEdge = b.slug === "apple" || b.slug === "samsung";
                   const dropdownAlignClass = isLeftEdge ? "left-0" : "left-1/2 -translate-x-1/2";
                   return (
-                    <div key={b.slug} className="group relative py-4">
+                    <div key={b.slug} className="group py-4">
                       <Link
                         href={`/brand/${b.slug}`}
                         className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
@@ -166,12 +166,12 @@ export default function Header() {
 
                       {/* Dropdown Menu */}
                       {bModels.length > 0 && (
-                        <div className={`absolute ${dropdownAlignClass} top-full z-[100] pt-2 hidden group-hover:block animate-fade-in`}>
-                          <div className="w-[32rem] rounded-3xl border border-border-c bg-surface p-5 shadow-2xl">
-                            <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3.5 border-b border-border-c pb-1.5 text-left">
+                        <div className="absolute left-0 right-0 w-full top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                          <div className="w-full rounded-3xl border border-border-c bg-surface p-6 shadow-2xl">
+                            <p className="text-sm font-extrabold text-accent uppercase tracking-wider mb-4 border-b border-border-c pb-2 text-left">
                               Популярни модели {b.name}
                             </p>
-                            <div className="grid grid-cols-2 gap-2.5 max-h-96 overflow-y-auto scrollbar-thin pr-1">
+                            <div className="grid grid-cols-4 lg:grid-cols-6 gap-3">
                               {bModels.map((m) => (
                                 <Link
                                   key={m}
@@ -190,7 +190,7 @@ export default function Header() {
                 })}
 
               {/* Brand "Други" (Others) */}
-              <div className="group relative py-4">
+              <div className="group py-4">
                 <Link
                   href="/shop?brand=other"
                   className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
@@ -202,12 +202,12 @@ export default function Header() {
                 </Link>
                 
                 {/* Dropdown of other brands */}
-                <div className="absolute left-1/2 -translate-x-1/2 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
-                  <div className="w-80 rounded-3xl border border-border-c bg-surface p-5 shadow-2xl">
-                    <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3.5 border-b border-border-c pb-1.5 text-left">
+                <div className="absolute left-0 right-0 w-full top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                  <div className="w-full rounded-3xl border border-border-c bg-surface p-6 shadow-2xl">
+                    <p className="text-sm font-extrabold text-accent uppercase tracking-wider mb-4 border-b border-border-c pb-2 text-left">
                       Други марки телефони
                     </p>
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-4 lg:grid-cols-6 gap-3">
                       {allBrands
                         .filter(
                           (b: any) =>
@@ -228,7 +228,7 @@ export default function Header() {
               </div>
 
               {/* Аксесоари (Accessories) */}
-              <div className="group relative py-4">
+              <div className="group py-4">
                 <Link
                   href="/shop"
                   className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
@@ -239,12 +239,12 @@ export default function Header() {
                   </svg>
                 </Link>
 
-                <div className="absolute left-1/2 -translate-x-1/2 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
-                  <div className="w-80 rounded-3xl border border-border-c bg-surface p-4 shadow-2xl">
-                    <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3 border-b border-border-c pb-1.5 px-2 text-left">
+                <div className="absolute left-0 right-0 w-full top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                  <div className="w-full rounded-3xl border border-border-c bg-surface p-6 shadow-2xl">
+                    <p className="text-sm font-extrabold text-accent uppercase tracking-wider mb-4 border-b border-border-c pb-2 text-left">
                       Категории аксесоари
                     </p>
-                    <div className="flex flex-col gap-2 pt-1">
+                    <div className="grid grid-cols-4 lg:grid-cols-6 gap-3">
                       {categories.map((c) => (
                         <Link
                           key={c.slug}

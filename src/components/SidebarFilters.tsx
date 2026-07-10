@@ -15,6 +15,7 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
   const activeCategory = searchParams.get("category") ?? "all";
   const activeBrand = searchParams.get("brand") ?? "all";
   const activeModel = searchParams.get("model") ?? "";
+  const activeScale = searchParams.get("scale") ?? "all";
   const activeSort = searchParams.get("sort") ?? "featured";
   
   // Internal price is in BGN (0 to 100 BGN corresponds to 0 to ~51 EUR)
@@ -95,35 +96,72 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
         </div>
       </div>
 
-      {/* 2. Product Type (Categories) */}
+      {/* 2. Product Type (Categories or Scale if Diecast) */}
       <div className="space-y-3">
         <span className="block text-xs font-bold text-text-muted uppercase tracking-wider">
           Тип продукт
         </span>
         <div className="flex flex-col gap-2">
-          <button
-            onClick={() => updateParam("category", "all")}
-            className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-bold text-left transition-all ${
-              activeCategory === "all"
-                ? "bg-accent/10 border border-accent/20 text-accent"
-                : "bg-surface-2 hover:bg-surface-3 text-text-muted hover:text-text border border-transparent"
-            }`}
-          >
-            <span>Всички аксесоари</span>
-          </button>
-          {categories.map((c) => (
-            <button
-              key={c.slug}
-              onClick={() => updateParam("category", c.slug)}
-              className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-bold text-left transition-all ${
-                activeCategory === c.slug
-                  ? "bg-accent/10 border border-accent/20 text-accent"
-                  : "bg-surface-2 hover:bg-surface-3 text-text-muted hover:text-text border border-transparent"
-              }`}
-            >
-              <span>{c.name}</span>
-            </button>
-          ))}
+          {activeBrand === "diecast-cars" ? (
+            <>
+              <button
+                onClick={() => updateParam("scale", "all")}
+                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-bold text-left transition-all ${
+                  activeScale === "all"
+                    ? "bg-accent/10 border border-accent/20 text-accent"
+                    : "bg-surface-2 hover:bg-surface-3 text-text-muted hover:text-text border border-transparent"
+                }`}
+              >
+                <span>Всички мащаби</span>
+              </button>
+              {[
+                { slug: "1-18", name: "Мащаб 1:18" },
+                { slug: "1-24", name: "Мащаб 1:24" },
+                { slug: "1-32", name: "Мащаб 1:32" },
+                { slug: "1-36", name: "Мащаб 1:36" },
+                { slug: "1-43", name: "Мащаб 1:43" },
+                { slug: "1-64", name: "Мащаб 1:64" },
+              ].map((s) => (
+                <button
+                  key={s.slug}
+                  onClick={() => updateParam("scale", s.slug)}
+                  className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-bold text-left transition-all ${
+                    activeScale === s.slug
+                      ? "bg-accent/10 border border-accent/20 text-accent"
+                      : "bg-surface-2 hover:bg-surface-3 text-text-muted hover:text-text border border-transparent"
+                  }`}
+                >
+                  <span>{s.name}</span>
+                </button>
+              ))}
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => updateParam("category", "all")}
+                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-bold text-left transition-all ${
+                  activeCategory === "all"
+                    ? "bg-accent/10 border border-accent/20 text-accent"
+                    : "bg-surface-2 hover:bg-surface-3 text-text-muted hover:text-text border border-transparent"
+                }`}
+              >
+                <span>Всички аксесоари</span>
+              </button>
+              {categories.map((c) => (
+                <button
+                  key={c.slug}
+                  onClick={() => updateParam("category", c.slug)}
+                  className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-bold text-left transition-all ${
+                    activeCategory === c.slug
+                      ? "bg-accent/10 border border-accent/20 text-accent"
+                      : "bg-surface-2 hover:bg-surface-3 text-text-muted hover:text-text border border-transparent"
+                  }`}
+                >
+                  <span>{c.name}</span>
+                </button>
+              ))}
+            </>
+          )}
         </div>
       </div>
 
@@ -150,7 +188,7 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
       )}
 
       {/* Clear Filters Button */}
-      {(activeCategory !== "all" || activeBrand !== "all" || activeModel !== "" || initialMaxPrice !== 100) && (
+      {(activeCategory !== "all" || activeBrand !== "all" || activeModel !== "" || activeScale !== "all" || initialMaxPrice !== 100) && (
         <button
           onClick={() => {
             router.push("/shop");

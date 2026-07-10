@@ -9,7 +9,6 @@ import brandModelsData from "@/lib/models.json";
 
 export default function CategoryLinks() {
   const router = useRouter();
-  const scrollRef = useRef<HTMLDivElement>(null);
   
   // State for the custom category flow wizard modal
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -29,23 +28,7 @@ export default function CategoryLinks() {
     }
   }, [selectedBrand]);
 
-  const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({
-        left: -scrollRef.current.clientWidth,
-        behavior: "smooth",
-      });
-    }
-  };
 
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({
-        left: scrollRef.current.clientWidth,
-        behavior: "smooth",
-      });
-    }
-  };
 
   const handleCategoryClick = (categorySlug: string) => {
     setSelectedCategory(categorySlug);
@@ -75,65 +58,41 @@ export default function CategoryLinks() {
           <span className="text-xs font-semibold text-accent uppercase tracking-wider">Категории</span>
           <h2 className="text-2xl font-extrabold mt-1 text-text">Пазарувай по категория</h2>
         </div>
-        
-        {/* Navigation Arrows */}
-        <div className="flex gap-2">
-          <button
-            onClick={scrollLeft}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border-c bg-surface hover:bg-surface-2 transition-colors text-text-muted hover:text-text shadow-sm"
-            aria-label="Предишна"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={scrollRight}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border-c bg-surface hover:bg-surface-2 transition-colors text-text-muted hover:text-text shadow-sm"
-            aria-label="Следваща"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
       </div>
 
-      {/* Swipeable Horizontal Scroll Container */}
-      <div
-        ref={scrollRef}
-        className="scrollbar-thin flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory"
-        style={{ scrollSnapType: "x mandatory" }}
-      >
-        {categories.map((c) => (
-          <div
-            key={c.slug}
-            onClick={() => handleCategoryClick(c.slug)}
-            className="group flex-shrink-0 w-full sm:w-[calc(50%-10px)] md:w-[calc(33.333%-14px)] snap-start rounded-3xl border border-border-c bg-surface overflow-hidden hover:border-accent/60 transition-all hover:scale-[1.01] shadow-md hover:shadow-lg cursor-pointer"
-          >
-            {/* Aspect ratio 3:2 container */}
-            <div className="relative aspect-[3/2] overflow-hidden">
-              <Image
-                src={`/images/categories/${c.slug}.webp`}
-                alt={c.name}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-              
-              {/* Overlay text bottom */}
-              <div className="absolute bottom-5 left-5 right-5 text-left">
-                <span className="text-[10px] font-bold text-accent-lime uppercase tracking-widest bg-accent-lime/10 px-2 py-0.5 rounded-full border border-accent-lime/20">
-                  Аксесоар
-                </span>
-                <h3 className="text-lg font-bold text-white mt-2 leading-tight">
-                  {c.name}
-                </h3>
+      {/* Grid Container for Categories (2 rows of 3) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {categories
+          .filter((c) => c.slug !== "car-stands")
+          .map((c) => (
+            <div
+              key={c.slug}
+              onClick={() => handleCategoryClick(c.slug)}
+              className="group rounded-3xl border border-border-c bg-surface overflow-hidden hover:border-accent/60 transition-all hover:scale-[1.01] shadow-md hover:shadow-lg cursor-pointer"
+            >
+              {/* Aspect ratio 3:2 container */}
+              <div className="relative aspect-[3/2] overflow-hidden">
+                <Image
+                  src={`/images/categories/${c.slug}.webp`}
+                  alt={c.name}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                
+                {/* Overlay text bottom */}
+                <div className="absolute bottom-5 left-5 right-5 text-left">
+                  <span className="text-[10px] font-bold text-accent-lime uppercase tracking-widest bg-accent-lime/10 px-2 py-0.5 rounded-full border border-accent-lime/20">
+                    Аксесоар
+                  </span>
+                  <h3 className="text-lg font-bold text-white mt-2 leading-tight">
+                    {c.name}
+                  </h3>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {/* Custom Category Selection Flow Modal */}

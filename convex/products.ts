@@ -56,7 +56,7 @@ export const list = query({
   handler: async (ctx, { category, brand, sort, q, scale, model, maxPrice, paginationOpts }) => {
     // If scale, model or maxPrice is specified, filter in-memory
     if ((scale && scale !== "all") || (model && model !== "all") || maxPrice !== undefined) {
-      const scaleNum = scale ? (scale.split(":")[1] || scale) : null;
+      const scaleNum = scale ? (scale.includes("-") ? scale.split("-")[1] : scale.includes(":") ? scale.split(":")[1] : scale) : null;
       const matchesScale = (name: string) => {
         if (!scaleNum) return true;
         return name.includes(`1:${scaleNum}`) || name.includes(`1/${scaleNum}`) || name.includes(`1-${scaleNum}`);
