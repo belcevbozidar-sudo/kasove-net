@@ -81,11 +81,12 @@ export default function Header() {
                 </Link>
               ))}
               <span className="ml-auto h-4 w-px bg-border-c" />
-              {categories.filter((c) => c.slug !== "silicone-cases" && c.slug !== "hard-cases" && c.slug !== "leather-cases").map((c) => (
-                <Link key={c.slug} href={`/shop?category=${c.slug}`} className="text-text-muted hover:text-accent-lime transition-colors text-xs font-semibold whitespace-nowrap">
-                  {c.shortName}
-                </Link>
-              ))}
+              <Link href="/shop" className="text-text-muted hover:text-accent-lime transition-colors text-xs font-semibold whitespace-nowrap">
+                Аксесоари
+              </Link>
+              <Link href="/shop?brand=diecast-cars" className="text-text-muted hover:text-accent-lime transition-colors text-xs font-semibold whitespace-nowrap">
+                Метални колички
+              </Link>
               <Link href="/shop" className="font-bold text-text hover:text-accent-lime text-xs whitespace-nowrap">
                 Всички продукти
               </Link>
@@ -134,19 +135,35 @@ export default function Header() {
               ))}
             </ul>
 
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Категории</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Раздели</p>
             <ul className="mb-6 space-y-1">
-              {categories.filter((c) => c.slug !== "silicone-cases" && c.slug !== "hard-cases" && c.slug !== "leather-cases").map((c) => (
-                <li key={c.slug}>
-                  <Link
-                    href={`/shop?category=${c.slug}`}
-                    onClick={() => setMobileOpen(false)}
-                    className="block rounded-lg px-2 py-2.5 hover:bg-surface-2"
-                  >
-                    {c.shortName}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link
+                  href="/shop"
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
+                >
+                  Аксесоари
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/shop?brand=diecast-cars"
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
+                >
+                  Метални колички
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/shop"
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
+                >
+                  Всички продукти
+                </Link>
+              </li>
             </ul>
 
             <ul className="space-y-1 border-t border-border-c pt-4 text-sm text-text-muted">
