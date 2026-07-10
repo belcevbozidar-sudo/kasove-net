@@ -257,14 +257,14 @@ export default function Header() {
                             <p className="text-sm font-extrabold text-accent uppercase tracking-wider mb-4 border-b border-border-c pb-2 text-left">
                               Популярни модели {b.name}
                             </p>
-                            <div className="grid grid-cols-4 lg:grid-cols-6 gap-3">
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-4 gap-y-2">
                               {bModels.map((m) => (
                                 <Link
                                   key={m}
                                   href={`/shop?brand=${b.slug}&model=${encodeURIComponent(m)}`}
-                                  className="text-xs text-text hover:text-accent border border-border-c/70 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-2.5 px-4 rounded-xl transition-all font-bold text-left normal-case block truncate"
+                                  className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                                 >
-                                  {m}
+                                  • {m}
                                 </Link>
                               ))}
                             </div>
@@ -293,7 +293,7 @@ export default function Header() {
                     <p className="text-sm font-extrabold text-accent uppercase tracking-wider mb-4 border-b border-border-c pb-2 text-left">
                       Други марки телефони
                     </p>
-                    <div className="grid grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-4 gap-y-2">
                       {allBrands
                         .filter(
                           (b: any) =>
@@ -303,9 +303,9 @@ export default function Header() {
                           <Link
                             key={ob.slug}
                             href={`/brand/${ob.slug}`}
-                            className="text-xs text-text hover:text-accent border border-border-c/70 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-2.5 px-3 rounded-xl transition-all font-bold text-left"
+                            className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                           >
-                            {ob.name}
+                            • {ob.name}
                           </Link>
                         ))}
                     </div>
@@ -330,14 +330,14 @@ export default function Header() {
                     <p className="text-sm font-extrabold text-accent uppercase tracking-wider mb-4 border-b border-border-c pb-2 text-left">
                       Категории аксесоари
                     </p>
-                    <div className="grid grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-4 gap-y-2">
                       {categories.map((c) => (
                         <Link
                           key={c.slug}
                           href={`/shop?category=${c.slug}`}
-                          className="text-xs text-text hover:text-accent border border-border-c/70 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-2.5 px-4 rounded-xl transition-all font-bold text-left"
+                          className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                         >
-                          {c.name}
+                          • {c.name}
                         </Link>
                       ))}
                     </div>
@@ -362,7 +362,7 @@ export default function Header() {
                     <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3 border-b border-border-c pb-1.5 px-2 text-left">
                       Мащаби макети
                     </p>
-                    <div className="flex flex-col gap-2 pt-1">
+                    <div className="flex flex-col gap-1.5 pt-1">
                       {[
                         { label: "Всички колички", href: "/shop?brand=diecast-cars" },
                         { label: "Мащаб 1:18", href: "/shop?brand=diecast-cars&scale=1:18" },
@@ -372,9 +372,9 @@ export default function Header() {
                         <Link
                           key={sc.label}
                           href={sc.href}
-                          className="text-xs text-text hover:text-accent border border-border-c/70 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-2.5 px-4 rounded-xl transition-all font-bold text-left"
+                          className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                         >
-                          {sc.label}
+                          • {sc.label}
                         </Link>
                       ))}
                     </div>
@@ -399,7 +399,7 @@ export default function Header() {
                     <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3 border-b border-border-c pb-1.5 px-2 text-left">
                       Бързи линкове
                     </p>
-                    <div className="flex flex-col gap-2 pt-1">
+                    <div className="flex flex-col gap-1.5 pt-1">
                       {[
                         { label: "Каталог продукти", href: "/shop" },
                         { label: "Топ Разпродажба", href: "/shop?sort=rating" },
@@ -408,9 +408,9 @@ export default function Header() {
                         <Link
                           key={l.label}
                           href={l.href}
-                          className="text-xs text-text hover:text-accent border border-border-c/70 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-2.5 px-4 rounded-xl transition-all font-bold text-left"
+                          className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                         >
-                          {l.label}
+                          • {l.label}
                         </Link>
                       ))}
                     </div>
