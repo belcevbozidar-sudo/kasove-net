@@ -104,9 +104,6 @@ export default async function ShopPage({
       {showBrandSelectionStep && (
         <div className="rounded-3xl border border-border-c bg-surface p-6 sm:p-10 text-center animate-fade-up">
           <div className="mb-8 flex flex-col items-center justify-center">
-            <span className="mb-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent uppercase tracking-wider">
-              Стъпка 1 от 2
-            </span>
             <h2 className="text-xl sm:text-2xl font-extrabold text-text">
               Изберете марка{category?.name ? ` за ${category.name}` : ""}
             </h2>
