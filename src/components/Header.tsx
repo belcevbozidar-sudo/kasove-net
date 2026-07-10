@@ -75,38 +75,40 @@ export default function Header() {
             </div>
           </div>
 
-          <nav className="hidden lg:block border-t border-border-c bg-surface/80 backdrop-blur-md">
-            <div className="mx-auto flex max-w-7xl items-center justify-between container-p py-0 text-[11px] font-bold uppercase tracking-wider text-text">
+          <nav className="hidden lg:block border-t border-border-c bg-surface/90 backdrop-blur-md">
+            <div className="mx-auto flex max-w-7xl items-center justify-between container-p py-0 text-[13px] font-extrabold uppercase tracking-wide text-text">
               {/* Phone Brands (Main) */}
               {brands
                 .filter((b) => b.slug !== "diecast-cars" && b.slug !== "other")
                 .map((b) => {
                   const bModels = (brandModelsData as Record<string, string[]>)[b.slug] || [];
+                  const isLeftEdge = b.slug === "apple" || b.slug === "samsung";
+                  const dropdownAlignClass = isLeftEdge ? "left-0" : "left-1/2 -translate-x-1/2";
                   return (
-                    <div key={b.slug} className="group relative py-3">
+                    <div key={b.slug} className="group relative py-4">
                       <Link
                         href={`/brand/${b.slug}`}
-                        className="text-text hover:text-accent transition-colors flex items-center gap-0.5"
+                        className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                       >
                         {b.name}
-                        <svg className="w-2.5 h-2.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                        <svg className="w-3 h-3 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M19 9l-7 7-7-7" />
                         </svg>
                       </Link>
 
                       {/* Dropdown Menu */}
                       {bModels.length > 0 && (
-                        <div className="absolute left-1/2 -translate-x-1/2 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
-                          <div className="w-80 rounded-2xl border border-border-c bg-surface p-4 shadow-2xl">
-                            <p className="text-[9px] font-extrabold text-accent uppercase tracking-widest mb-2 border-b border-border-c pb-1 text-left">
+                        <div className={`absolute ${dropdownAlignClass} top-full z-[100] pt-2 hidden group-hover:block animate-fade-in`}>
+                          <div className="w-[32rem] rounded-3xl border border-border-c bg-surface p-5 shadow-2xl">
+                            <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3.5 border-b border-border-c pb-1.5 text-left">
                               Популярни модели {b.name}
                             </p>
-                            <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 max-h-72 overflow-y-auto scrollbar-thin">
+                            <div className="grid grid-cols-2 gap-2.5 max-h-96 overflow-y-auto scrollbar-thin pr-1">
                               {bModels.map((m) => (
                                 <Link
                                   key={m}
                                   href={`/shop?brand=${b.slug}&model=${encodeURIComponent(m)}`}
-                                  className="text-[10px] text-text-muted hover:text-accent hover:bg-surface-2 py-1 px-1.5 rounded transition-all font-semibold text-left normal-case"
+                                  className="text-xs text-text hover:text-accent border border-border-c/70 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-2.5 px-4 rounded-xl transition-all font-bold text-left normal-case block truncate"
                                 >
                                   {m}
                                 </Link>
@@ -120,24 +122,24 @@ export default function Header() {
                 })}
 
               {/* Brand "Други" (Others) */}
-              <div className="group relative py-3">
+              <div className="group relative py-4">
                 <Link
                   href="/shop?brand=other"
-                  className="text-text hover:text-accent transition-colors flex items-center gap-0.5"
+                  className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                 >
                   Други
-                  <svg className="w-2.5 h-2.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                  <svg className="w-3 h-3 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </Link>
                 
                 {/* Dropdown of other brands */}
                 <div className="absolute left-1/2 -translate-x-1/2 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
-                  <div className="w-64 rounded-2xl border border-border-c bg-surface p-4 shadow-2xl">
-                    <p className="text-[9px] font-extrabold text-accent uppercase tracking-widest mb-2 border-b border-border-c pb-1 text-left">
+                  <div className="w-80 rounded-3xl border border-border-c bg-surface p-5 shadow-2xl">
+                    <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3.5 border-b border-border-c pb-1.5 text-left">
                       Други марки телефони
                     </p>
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
+                    <div className="grid grid-cols-2 gap-2.5">
                       {allBrands
                         .filter(
                           (b) =>
@@ -147,7 +149,7 @@ export default function Header() {
                           <Link
                             key={ob.slug}
                             href={`/brand/${ob.slug}`}
-                            className="text-[10px] text-text-muted hover:text-accent hover:bg-surface-2 py-1 px-1.5 rounded transition-all font-semibold text-left"
+                            className="text-xs text-text hover:text-accent border border-border-c/70 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-2.5 px-3 rounded-xl transition-all font-bold text-left"
                           >
                             {ob.name}
                           </Link>
@@ -158,28 +160,28 @@ export default function Header() {
               </div>
 
               {/* Аксесоари (Accessories) */}
-              <div className="group relative py-3">
+              <div className="group relative py-4">
                 <Link
                   href="/shop"
-                  className="text-text hover:text-accent transition-colors flex items-center gap-0.5"
+                  className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                 >
                   Аксесоари
-                  <svg className="w-2.5 h-2.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                  <svg className="w-3 h-3 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </Link>
 
                 <div className="absolute left-1/2 -translate-x-1/2 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
-                  <div className="w-64 rounded-2xl border border-border-c bg-surface p-3 shadow-2xl">
-                    <p className="text-[9px] font-extrabold text-accent uppercase tracking-widest mb-2 border-b border-border-c pb-1 px-2 text-left">
+                  <div className="w-80 rounded-3xl border border-border-c bg-surface p-4 shadow-2xl">
+                    <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3 border-b border-border-c pb-1.5 px-2 text-left">
                       Категории аксесоари
                     </p>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-2 pt-1">
                       {categories.map((c) => (
                         <Link
                           key={c.slug}
                           href={`/shop?category=${c.slug}`}
-                          className="text-[10px] text-text-muted hover:text-accent hover:bg-surface-2 py-1.5 px-2 rounded transition-all font-semibold text-left"
+                          className="text-xs text-text hover:text-accent border border-border-c/70 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-2.5 px-4 rounded-xl transition-all font-bold text-left"
                         >
                           {c.name}
                         </Link>
@@ -190,23 +192,23 @@ export default function Header() {
               </div>
 
               {/* Метални колички (Diecast Cars) */}
-              <div className="group relative py-3">
+              <div className="group relative py-4">
                 <Link
                   href="/shop?brand=diecast-cars"
-                  className="text-text hover:text-accent transition-colors flex items-center gap-0.5"
+                  className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                 >
                   Метални колички
-                  <svg className="w-2.5 h-2.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                  <svg className="w-3 h-3 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </Link>
 
-                <div className="absolute left-1/2 -translate-x-1/2 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
-                  <div className="w-56 rounded-2xl border border-border-c bg-surface p-3 shadow-2xl">
-                    <p className="text-[9px] font-extrabold text-accent uppercase tracking-widest mb-2 border-b border-border-c pb-1 px-2 text-left">
+                <div className="absolute right-0 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                  <div className="w-72 rounded-3xl border border-border-c bg-surface p-4 shadow-2xl">
+                    <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3 border-b border-border-c pb-1.5 px-2 text-left">
                       Мащаби макети
                     </p>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-2 pt-1">
                       {[
                         { label: "Всички колички", href: "/shop?brand=diecast-cars" },
                         { label: "Мащаб 1:18", href: "/shop?brand=diecast-cars&scale=1:18" },
@@ -216,7 +218,7 @@ export default function Header() {
                         <Link
                           key={sc.label}
                           href={sc.href}
-                          className="text-[10px] text-text-muted hover:text-accent hover:bg-surface-2 py-1.5 px-2 rounded transition-all font-semibold text-left"
+                          className="text-xs text-text hover:text-accent border border-border-c/70 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-2.5 px-4 rounded-xl transition-all font-bold text-left"
                         >
                           {sc.label}
                         </Link>
@@ -227,23 +229,23 @@ export default function Header() {
               </div>
 
               {/* Всички продукти (All products) */}
-              <div className="group relative py-3">
+              <div className="group relative py-4">
                 <Link
                   href="/shop"
-                  className="text-text hover:text-accent transition-colors flex items-center gap-0.5 font-extrabold text-accent"
+                  className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1 font-extrabold text-accent"
                 >
                   Всички продукти
-                  <svg className="w-2.5 h-2.5 text-accent/80 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                  <svg className="w-3 h-3 text-accent/80 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </Link>
 
                 <div className="absolute right-0 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
-                  <div className="w-52 rounded-2xl border border-border-c bg-surface p-3 shadow-2xl">
-                    <p className="text-[9px] font-extrabold text-accent uppercase tracking-widest mb-2 border-b border-border-c pb-1 px-2 text-left">
+                  <div className="w-64 rounded-3xl border border-border-c bg-surface p-4 shadow-2xl">
+                    <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3 border-b border-border-c pb-1.5 px-2 text-left">
                       Бързи линкове
                     </p>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-2 pt-1">
                       {[
                         { label: "Каталог продукти", href: "/shop" },
                         { label: "Топ Разпродажба", href: "/shop?sort=rating" },
@@ -252,7 +254,7 @@ export default function Header() {
                         <Link
                           key={l.label}
                           href={l.href}
-                          className="text-[10px] text-text-muted hover:text-accent hover:bg-surface-2 py-1.5 px-2 rounded transition-all font-semibold text-left"
+                          className="text-xs text-text hover:text-accent border border-border-c/70 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-2.5 px-4 rounded-xl transition-all font-bold text-left"
                         >
                           {l.label}
                         </Link>
@@ -263,6 +265,7 @@ export default function Header() {
               </div>
             </div>
           </nav>
+
 
         </div>
       </div>
