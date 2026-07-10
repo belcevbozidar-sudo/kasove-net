@@ -27,32 +27,31 @@ export default function BrandModelSelector({ brandSlug, brandName, models, categ
   const visibleModels = showAll ? models : models.slice(0, 24);
 
   return (
-    <div className="rounded-3xl border border-border-c bg-surface p-6 sm:p-8 text-center animate-fade-up w-full">
-      <div className="mb-8 text-center">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-text">
+    <div className="rounded-3xl border border-border-c bg-surface p-6 sm:p-8 text-left animate-fade-up w-full">
+      <div className="mb-6">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-text tracking-tight">
           Изберете вашия модел
         </h2>
       </div>
 
       {/* Models Grid */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-x-2 gap-y-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-2">
         {visibleModels.map((m) => (
           <button
             key={m}
             onClick={() => handleSelectModel(m)}
-            className="text-left text-xs font-bold text-text/90 hover:text-accent hover:bg-accent/5 py-2 px-2.5 rounded-xl transition-all cursor-pointer block truncate border border-transparent hover:border-accent/10"
+            className="text-left text-[13px] font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
           >
-            {m}
+            • {m}
           </button>
         ))}
       </div>
-
 
       {/* Show All Toggle */}
       {models.length > 24 && !showAll && (
         <button
           onClick={() => setShowAll(true)}
-          className="mx-auto mt-8 flex items-center gap-2 rounded-full gradient-brand px-6 py-2.5 text-xs font-extrabold text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
+          className="mt-6 flex items-center gap-2 rounded-full gradient-brand px-5 py-2 text-xs font-extrabold text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
         >
           Покажи всички модели ({models.length})
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -63,3 +62,4 @@ export default function BrandModelSelector({ brandSlug, brandName, models, categ
     </div>
   );
 }
+
