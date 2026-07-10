@@ -2,11 +2,11 @@ import { Suspense } from "react";
 import Link from "next/link";
 import SidebarFilters from "@/components/SidebarFilters";
 import ProductCard from "@/components/ProductCard";
+import BrandModelSelector from "@/components/BrandModelSelector";
 import { getBrand, getCategory, categories, brands } from "@/lib/data";
 import { filterProducts } from "@/lib/products-server";
 import { decodeCursor, decodeHistory, nextLinkParams, prevLinkParams } from "@/lib/pagination";
 import brandModelsData from "@/lib/models.json";
-import CategoryWizardModelSelect from "@/components/CategoryWizardModelSelect";
 
 export const metadata = {
   title: "Магазин — Кейсове.нет",
@@ -51,10 +51,14 @@ export default async function ShopPage({
   const brand = sp.brand ? getBrand(sp.brand) : undefined;
   const category = sp.category ? getCategory(sp.category) : undefined;
 
-  // Category-first flow: if category is selected, but brand or model is missing
-  const showCategoryWizard = sp.category && (!sp.brand || !sp.model);
-  const showBrandStep = showCategoryWizard && !sp.brand;
-  const showModelStep = showCategoryWizard && sp.brand && !sp.model;
+  // Wizard logic:
+  // Step 1: If category selected, but brand is missing
+  const showBrandSelectionStep = sp.category && !sp.brand;
+
+  // Step 2: If brand is selected, but model is missing (excluding non-phone collections)
+  const showModelSelectionStep = sp.brand && !sp.model && sp.brand !== "other" && sp.brand !== "diecast-cars";
+
+  const showWizard = showBrandSelectionStep || showModelSelectionStep;
 
   // Load models statically from local JSON file
   const models = sp.brand ? ((brandModelsData as Record<string, string[]>)[sp.brand] || []) : [];
@@ -65,7 +69,7 @@ export default async function ShopPage({
   let isDone = true;
   let continueCursor = "";
 
-  if (!showCategoryWizard) {
+  if (!showWizard) {
     const res = await filterProducts({
       brand: sp.brand,
       category: sp.category,
@@ -96,8 +100,8 @@ export default async function ShopPage({
         {totalCount !== null ? `${totalCount} продукта · ` : ""}Страница {currentPage}
       </p>
 
-      {/* Category-first wizard: Step 1 (Select Brand) */}
-      {showBrandStep && (
+      {/* Brand Selection Step (Category-first flow Step 1) */}
+      {showBrandSelectionStep && (
         <div className="rounded-3xl border border-border-c bg-surface p-6 sm:p-10 text-center animate-fade-up">
           <div className="mb-6 flex flex-col items-center justify-center">
             <span className="mb-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent uppercase tracking-wider">
@@ -132,39 +136,18 @@ export default async function ShopPage({
         </div>
       )}
 
-      {/* Category-first wizard: Step 2 (Select Model Dropdown) */}
-      {showModelStep && (
-        <div className="rounded-3xl border border-border-c bg-surface p-6 sm:p-10 text-center animate-fade-up">
-          <div className="mb-6 flex flex-col items-center justify-center">
-            <span className="mb-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent uppercase tracking-wider">
-              Стъпка 2 от 2
-            </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-text">
-              Изберете модел на {brand?.name}
-            </h2>
-            <p className="mt-1.5 text-sm text-text-muted max-w-md">
-              Изберете вашия модел телефон от падащото меню, за да отворите страницата с продукти.
-            </p>
-          </div>
-
-          <div className="max-w-md mx-auto space-y-4">
-            <CategoryWizardModelSelect spCategory={sp.category} spBrand={sp.brand} models={models} />
-
-
-            <div className="pt-6 flex justify-center gap-4">
-              <Link
-                href={`/shop?category=${sp.category}`}
-                className="rounded-full border border-border-c px-5 py-2.5 text-xs font-bold text-text-muted hover:text-text hover:bg-surface-2 transition-all"
-              >
-                ← Назад към марките
-              </Link>
-            </div>
-          </div>
-        </div>
+      {/* Model Selection Step (Both Category-first Step 2 and Brand-first click) */}
+      {showModelSelectionStep && (
+        <BrandModelSelector
+          brandSlug={sp.brand!}
+          brandName={brand?.name || ""}
+          models={models}
+          categorySlug={sp.category}
+        />
       )}
 
       {/* Main Product list view with Sidebar Layout */}
-      {!showCategoryWizard && (
+      {!showWizard && (
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Sidebar Left Column */}
           <Suspense fallback={<div className="w-full lg:w-64 h-96 bg-surface animate-pulse rounded-3xl" />}>
@@ -212,7 +195,6 @@ export default async function ShopPage({
                         href={buildLink(sp, nextLinkParams(sp.cursor, history, continueCursor))}
                         className="rounded-xl border border-border-c bg-surface px-4 py-2 text-sm font-semibold text-text hover:bg-surface-2 transition-colors"
                       >
-
                         Следваща →
                       </Link>
                     ) : (
@@ -230,3 +212,4 @@ export default async function ShopPage({
     </div>
   );
 }
+
