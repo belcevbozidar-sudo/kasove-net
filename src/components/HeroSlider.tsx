@@ -16,7 +16,7 @@ interface Slide {
 
 const slides: Slide[] = [
   {
-    image: "/images/hero-collection.png",
+    image: "/images/hero-collection.webp",
     eyebrow: "Нова колекция",
     title: "Калъфи за всеки телефон, всеки стил",
     subtitle: "Apple, Samsung, Xiaomi, Huawei, Google и OnePlus — на едно място, на топ цени.",
@@ -24,7 +24,7 @@ const slides: Slide[] = [
     ctaHref: "/shop?category=silicone-cases",
   },
   {
-    image: "/images/hero-toys.jpg",
+    image: "/images/hero-toys.webp",
     eyebrow: "Метални макети",
     title: "Колекционерски колички и детски играчки",
     subtitle: "Изберете перфектния метален макет в мащаб 1:18, 1:24 или 1:32 на супер цена.",
@@ -32,7 +32,7 @@ const slides: Slide[] = [
     ctaHref: "/shop?category=toys",
   },
   {
-    image: "/images/hero-lifestyle.png",
+    image: "/images/hero-lifestyle.webp",
     eyebrow: "Стил и защита",
     title: "Кожени калъфи и аксесоари",
     subtitle: "Елегантни кожени калъфи тип тефтер с магнитно закопчаване и джобове за карти.",
@@ -40,6 +40,7 @@ const slides: Slide[] = [
     ctaHref: "/shop?category=leather-cases",
   },
 ];
+
 
 export default function HeroSlider() {
   const [index, setIndex] = useState(0);

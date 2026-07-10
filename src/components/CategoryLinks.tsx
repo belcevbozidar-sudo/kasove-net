@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { categories, brands } from "@/lib/data";
 import brandModelsData from "@/lib/models.json";
@@ -112,9 +113,11 @@ export default function CategoryLinks() {
           >
             {/* Aspect ratio 3:2 container */}
             <div className="relative aspect-[3/2] overflow-hidden">
-              <img
-                src={`/images/categories/${c.slug}.jpg`}
+              <Image
+                src={`/images/categories/${c.slug}.webp`}
                 alt={c.name}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />

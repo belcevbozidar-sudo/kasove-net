@@ -5,7 +5,8 @@ import { useState } from "react";
 
 export default function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   const [active, setActive] = useState(0);
-  const gallery = images.length > 0 ? images : ["/images/case-clear.png"];
+  const gallery = images.length > 0 ? images : ["/images/case-clear.webp"];
+
 
   return (
     <div className="flex flex-col gap-3 min-w-0 w-full overflow-hidden">

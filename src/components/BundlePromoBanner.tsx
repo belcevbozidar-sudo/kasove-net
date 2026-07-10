@@ -7,7 +7,8 @@ export default function BundlePromoBanner() {
     <section className="mx-auto max-w-7xl container-p py-14">
       <div className="grid overflow-hidden rounded-3xl border border-border-c bg-surface lg:grid-cols-2">
         <div className="relative order-2 h-64 lg:order-1 lg:h-full">
-          <Image src="/images/bundle-promo.png" alt="Калъф и протектор бъндел" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+          <Image src="/images/bundle-promo.webp" alt="Калъф и протектор бъндел" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+
         </div>
         <div className="order-1 flex flex-col justify-center gap-4 p-8 sm:p-12 lg:order-2">
           <span className="w-fit rounded-full bg-accent-lime/15 px-3.5 py-1.5 text-xs font-semibold text-accent-lime">

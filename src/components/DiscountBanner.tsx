@@ -1,49 +1,60 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function DiscountBanner() {
   const [isVisible, setIsVisible] = useState(true);
+  const router = useRouter();
 
   if (!isVisible) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 animate-bounce-slow">
-      <div className="relative group max-w-sm rounded-2xl p-0.5 bg-gradient-to-r from-accent to-accent-lime shadow-2xl overflow-hidden hover:scale-105 transition-transform duration-300">
-        {/* Animated background glow */}
-        <div className="absolute inset-0 bg-gradient-to-r from-accent to-accent-lime opacity-30 blur-md group-hover:opacity-60 transition-opacity duration-300" />
+      <div 
+        onClick={() => router.push("/shop?category=all")}
+        className="relative w-28 h-28 group cursor-pointer"
+      >
+        {/* Close Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsVisible(false);
+          }}
+          className="absolute -top-1 -right-1 z-20 bg-surface border border-border-c text-text-muted hover:text-text rounded-full p-1.5 shadow-md transition-colors"
+          aria-label="Затвори"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* Outer Rotating Dashed Circle */}
+        <div className="absolute inset-0 rounded-full border-2 border-dashed border-accent animate-spin-slow opacity-80 group-hover:border-accent-lime transition-colors duration-300" />
         
-        {/* Main Content Card */}
-        <div className="relative bg-surface rounded-[14px] p-5 flex items-center gap-4">
-          {/* Close button */}
-          <button
-            onClick={() => setIsVisible(false)}
-            className="absolute top-2 right-2 text-text-muted hover:text-text transition-colors p-1"
-            aria-label="Затвори"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        {/* Glow effect */}
+        <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-accent to-accent-lime opacity-20 blur-md group-hover:opacity-40 transition-opacity duration-300" />
 
-          {/* Badge element */}
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full gradient-brand text-white font-heading font-extrabold text-lg shadow-lg relative animate-pulse-slow">
+        {/* Inner Solid Circle Badge */}
+        <div className="absolute inset-2.5 rounded-full bg-surface border border-border-c flex flex-col items-center justify-center text-center shadow-lg group-hover:scale-105 transition-transform duration-300 overflow-hidden">
+          {/* Subtle overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-accent/5 to-transparent pointer-events-none" />
+          
+          <span className="text-2xl font-black gradient-text tracking-tighter relative z-10 leading-none">
             -50%
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-lime opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-accent-lime"></span>
-            </span>
-          </div>
-
-          {/* Text content */}
-          <div className="pr-4">
-            <h4 className="font-heading font-extrabold text-sm text-text">
-              ГОРЕЩА ОФЕРТА!
-            </h4>
-            <p className="mt-1 text-xs text-text-muted leading-relaxed">
-              Всички мобилни аксесоари в момента са с <span className="font-bold text-accent">50% намаление</span>!
-            </p>
-          </div>
+          </span>
+          <span className="text-[9px] font-black text-text uppercase tracking-widest leading-none mt-1.5 relative z-10">
+            Супер
+          </span>
+          <span className="text-[8px] font-bold text-accent-lime uppercase tracking-wider leading-none mt-0.5 relative z-10">
+            Намаление
+          </span>
+          
+          {/* Animated pulsing dot indicator */}
+          <span className="absolute bottom-2 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-lime opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-lime"></span>
+          </span>
         </div>
       </div>
     </div>
