@@ -102,15 +102,11 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-border-c">
-        <div className="mx-auto max-w-7xl container-p flex flex-col sm:flex-row items-center justify-between gap-3 py-5 text-xs text-text-muted">
+        <div className="mx-auto max-w-7xl container-p flex items-center justify-center py-5 text-xs text-text-muted">
           <p>© {new Date().getFullYear()} Кейсове.нет — Всички права запазени.</p>
-          <div className="flex items-center gap-2 text-[11px] font-semibold">
-            <span className="rounded border border-border-c px-2 py-1">VISA</span>
-            <span className="rounded border border-border-c px-2 py-1">Mastercard</span>
-            <span className="rounded border border-border-c px-2 py-1">Наложен платеж</span>
-          </div>
         </div>
       </div>
+
     </footer>
   );
 }
