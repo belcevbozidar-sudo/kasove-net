@@ -14,9 +14,19 @@ export default function BrandStrip() {
             href={`/brand/${b.slug}`}
             className="group flex flex-col gap-3 rounded-2xl border border-border-c bg-surface p-5 transition-all hover:-translate-y-1 hover:border-accent/60"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl gradient-brand text-white">
-              <PhoneOutlineIcon className="w-5 h-5" />
-            </span>
+            <div className="flex h-10 items-center justify-start">
+              {b.slug === "universal" ? (
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl gradient-brand text-white">
+                  <PhoneOutlineIcon className="w-5 h-5" />
+                </span>
+              ) : (
+                <img
+                  src={`/images/logos/${b.slug}.svg`}
+                  alt={`${b.name} logo`}
+                  className="h-8 w-auto max-w-[130px] object-contain object-left transition-transform group-hover:scale-105"
+                />
+              )}
+            </div>
             <div>
               <p className="font-heading font-bold">{b.name}</p>
               <p className="text-xs text-text-muted">{b.tagline}</p>
