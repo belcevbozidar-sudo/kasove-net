@@ -103,19 +103,19 @@ export default async function ShopPage({
       {/* Brand Selection Step (Category-first flow Step 1) */}
       {showBrandSelectionStep && (
         <div className="rounded-3xl border border-border-c bg-surface p-6 sm:p-10 text-center animate-fade-up">
-          <div className="mb-6 flex flex-col items-center justify-center">
+          <div className="mb-8 flex flex-col items-center justify-center">
             <span className="mb-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent uppercase tracking-wider">
               Стъпка 1 от 2
             </span>
             <h2 className="text-xl sm:text-2xl font-extrabold text-text">
-              Изберете марка за {category?.name}
+              Изберете марка{category?.name ? ` за ${category.name}` : ""}
             </h2>
             <p className="mt-1.5 text-sm text-text-muted max-w-md">
               Изберете марката на вашия телефон, за да видите наличните съвместими продукти.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 max-w-4xl mx-auto w-full">
             {brands
               .filter(b => b.slug !== "universal" && b.slug !== "other" && b.slug !== "diecast-cars")
               .map((b) => {
@@ -126,9 +126,24 @@ export default async function ShopPage({
                   <Link
                     key={b.slug}
                     href={`/shop?${queryStr.toString()}`}
-                    className="rounded-xl border border-border-c bg-surface-2 p-4 text-sm font-semibold hover:border-accent hover:text-accent transition-all text-center hover:scale-[1.02]"
+                    className="group relative flex aspect-[1.45/1] flex-col items-center justify-between rounded-[2rem] border border-border-c bg-zinc-950 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.03] overflow-hidden"
                   >
-                    {b.name}
+                    {/* Generated Brand Image Background */}
+                    <img
+                      src={`/images/brands/${b.slug}.jpg`}
+                      alt={`${b.name} background`}
+                      className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-500"
+                    />
+
+                    {/* Dark gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
+
+                    <div className="relative z-10 flex-1 flex items-center justify-center w-full" />
+
+                    {/* Text label underneath */}
+                    <span className="relative z-10 text-sm font-black uppercase tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] mt-auto group-hover:text-accent transition-colors duration-300">
+                      {b.name}
+                    </span>
                   </Link>
                 );
               })}

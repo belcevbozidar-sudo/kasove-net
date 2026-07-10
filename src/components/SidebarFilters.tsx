@@ -64,12 +64,37 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
   // Convert BGN to EUR for display
   const maxPriceEur = maxPrice / 1.95583;
 
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="w-full lg:w-64 shrink-0 bg-surface border border-border-c rounded-3xl p-6 space-y-8 h-fit">
-      <div>
-        <h3 className="font-heading font-extrabold text-lg text-text mb-4">Филтри</h3>
-        <hr className="border-border-c/60" />
-      </div>
+    <div className="w-full lg:w-64 shrink-0">
+      {/* Mobile Toggle Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full lg:hidden flex items-center justify-between rounded-3xl border border-border-c bg-surface px-5 py-3.5 text-sm font-bold text-text mb-4"
+      >
+        <span className="flex items-center gap-2">
+          <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+          Филтри {(activeCategory !== "all" || activeBrand !== "all" || activeModel !== "" || activeScale !== "all" || initialMaxPrice !== 100) ? "(активни)" : ""}
+        </span>
+        <svg
+          className={`w-4 h-4 text-text-muted transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Filters Container */}
+      <div className={`w-full lg:w-64 shrink-0 bg-surface border border-border-c rounded-3xl p-6 space-y-8 h-fit lg:block ${isOpen ? "block animate-fade-in" : "hidden"}`}>
+        <div>
+          <h3 className="font-heading font-extrabold text-lg text-text mb-4">Филтри</h3>
+          <hr className="border-border-c/60" />
+        </div>
 
       {/* 1. Price Slider */}
       <div className="space-y-3">
@@ -198,6 +223,7 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
           Изчисти филтрите
         </button>
       )}
+      </div>
     </div>
   );
 }
