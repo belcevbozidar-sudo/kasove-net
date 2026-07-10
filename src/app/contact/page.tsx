@@ -17,10 +17,7 @@ export default function ContactPage() {
       <div className="mt-10 grid gap-8 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-2">
           <div className="rounded-2xl border border-border-c bg-surface p-5">
-            <p className="text-xs text-text-muted">Имейл</p>
-            <p className="font-semibold">bojidar453@abv.bg</p>
-          </div>
-          <div className="rounded-2xl border border-border-c bg-surface p-5">
+
             <p className="text-xs text-text-muted">Телефон за поръчки</p>
             <p className="font-semibold">0893/66 47 99</p>
           </div>

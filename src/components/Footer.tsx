@@ -55,7 +55,6 @@ export default function Footer() {
           </p>
           <div className="mt-4 text-xs text-text-muted space-y-1">
             <p><strong>Тел:</strong> <a href="tel:0893664799" className="hover:text-accent-lime">0893/66 47 99</a></p>
-            <p><strong>Email:</strong> <a href="mailto:bojidar453@abv.bg" className="hover:text-accent-lime">bojidar453@abv.bg</a></p>
           </div>
         </div>
 
