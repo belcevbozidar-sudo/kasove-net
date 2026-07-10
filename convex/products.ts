@@ -411,3 +411,263 @@ export const cleanAllProductImages = mutation({
     };
   },
 });
+
+// Transliterate Cyrillic to Latin and create clean URL slugs
+function slugify(text: string): string {
+  const cyrillicToLatin: { [key: string]: string } = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ж': 'zh', 'з': 'z',
+    'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p',
+    'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch',
+    'ш': 'sh', 'щ': 'sht', 'ъ': 'a', 'ь': 'y', 'ю': 'yu', 'я': 'ya',
+    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ж': 'Zh', 'З': 'Z',
+    'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N', 'О': 'O', 'П': 'P',
+    'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch',
+    'Ш': 'Sh', 'Щ': 'Sht', 'Ъ': 'A', 'Ь': 'Y', 'Ю': 'Yu', 'Я': 'Ya'
+  };
+
+  let translated = "";
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    translated += cyrillicToLatin[char] || char;
+  }
+
+  return translated
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// Adjust precomputed facet counts for listing pages
+async function adjustFacetCount(db: any, category: string, brand: string, amount: number) {
+  const keys = [
+    "all|all",
+    `${category}|all`,
+    `all|${brand}`,
+    `${category}|${brand}`
+  ];
+  for (const key of keys) {
+    const existing = await db
+      .query("facetCounts")
+      .withIndex("by_key", (q: any) => q.eq("key", key))
+      .unique();
+    if (existing) {
+      const newCount = Math.max(0, existing.count + amount);
+      await db.patch(existing._id, { count: newCount });
+    } else if (amount > 0) {
+      await db.insert("facetCounts", { key, count: amount });
+    }
+  }
+}
+
+export const getLockout = query({
+  args: { ip: v.string() },
+  handler: async (ctx, { ip }) => {
+    const attempt = await ctx.db
+      .query("loginAttempts")
+      .withIndex("by_ip", (q) => q.eq("ip", ip))
+      .unique();
+    if (!attempt) return { locked: false, remainingAttempts: 3 };
+
+    if (attempt.lockoutUntil && attempt.lockoutUntil > Date.now()) {
+      return {
+        locked: true,
+        lockoutUntil: attempt.lockoutUntil,
+        remainingAttempts: 0,
+      };
+    }
+
+    return {
+      locked: false,
+      remainingAttempts: Math.max(0, 3 - attempt.attempts),
+    };
+  },
+});
+
+export const recordLoginFailure = mutation({
+  args: { ip: v.string() },
+  handler: async (ctx, { ip }) => {
+    const attempt = await ctx.db
+      .query("loginAttempts")
+      .withIndex("by_ip", (q) => q.eq("ip", ip))
+      .unique();
+
+    const now = Date.now();
+    if (attempt) {
+      const isLockoutExpired = attempt.lockoutUntil && attempt.lockoutUntil <= now;
+      const newAttempts = isLockoutExpired ? 1 : attempt.attempts + 1;
+      const lockoutUntil = newAttempts >= 3 ? now + 60 * 60 * 1000 : undefined;
+
+      await ctx.db.patch(attempt._id, {
+        attempts: newAttempts,
+        lockoutUntil,
+      });
+
+      return {
+        attempts: newAttempts,
+        locked: newAttempts >= 3,
+        lockoutUntil,
+      };
+    } else {
+      await ctx.db.insert("loginAttempts", {
+        ip,
+        attempts: 1,
+      });
+      return {
+        attempts: 1,
+        locked: false,
+      };
+    }
+  },
+});
+
+export const resetLoginAttempts = mutation({
+  args: { ip: v.string() },
+  handler: async (ctx, { ip }) => {
+    const attempt = await ctx.db
+      .query("loginAttempts")
+      .withIndex("by_ip", (q) => q.eq("ip", ip))
+      .unique();
+    if (attempt) {
+      await ctx.db.patch(attempt._id, {
+        attempts: 0,
+        lockoutUntil: undefined,
+      });
+    }
+  },
+});
+
+export const adminAddProduct = mutation({
+  args: {
+    name: v.string(),
+    brand: v.string(),
+    model: v.string(),
+    category: v.string(),
+    price: v.number(),
+    oldPrice: v.optional(v.number()),
+    description: v.string(),
+    gallery: v.array(v.string()),
+    features: v.array(v.string()),
+    badge: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    let baseSlug = slugify(args.name);
+    let slug = baseSlug;
+    let counter = 1;
+    while (true) {
+      const existing = await ctx.db
+        .query("products")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .unique();
+      if (!existing) break;
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    const sourceId = `prod_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const image = args.gallery[0] || "/images/placeholder.png";
+
+    const product = {
+      sourceId,
+      slug,
+      name: args.name,
+      brand: args.brand,
+      model: args.model,
+      category: args.category,
+      price: args.price,
+      oldPrice: args.oldPrice,
+      hasOldPrice: !!args.oldPrice && args.oldPrice > args.price,
+      image,
+      gallery: args.gallery,
+      rating: 4.8,
+      reviewCount: Math.floor(Math.random() * 15) + 5,
+      description: args.description,
+      features: args.features,
+      badge: args.badge,
+    };
+
+    const id = await ctx.db.insert("products", product);
+    await adjustFacetCount(ctx.db, args.category, args.brand, 1);
+    return id;
+  },
+});
+
+export const adminUpdateProduct = mutation({
+  args: {
+    id: v.string(), // matches client-side 'id' which is sourceId
+    name: v.string(),
+    brand: v.string(),
+    model: v.string(),
+    category: v.string(),
+    price: v.number(),
+    oldPrice: v.optional(v.number()),
+    description: v.string(),
+    gallery: v.array(v.string()),
+    features: v.array(v.string()),
+    badge: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", args.id))
+      .unique();
+    if (!existing) throw new Error("Product not found");
+
+    let slug = existing.slug;
+    if (existing.name !== args.name) {
+      let baseSlug = slugify(args.name);
+      slug = baseSlug;
+      let counter = 1;
+      while (true) {
+        const dup = await ctx.db
+          .query("products")
+          .withIndex("by_slug", (q) => q.eq("slug", slug))
+          .unique();
+        if (!dup || dup._id === existing._id) break;
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+    }
+
+    const image = args.gallery[0] || "/images/placeholder.png";
+    const oldCategory = existing.category;
+    const oldBrand = existing.brand;
+
+    await ctx.db.patch(existing._id, {
+      name: args.name,
+      slug,
+      brand: args.brand,
+      model: args.model,
+      category: args.category,
+      price: args.price,
+      oldPrice: args.oldPrice,
+      hasOldPrice: !!args.oldPrice && args.oldPrice > args.price,
+      image,
+      gallery: args.gallery,
+      description: args.description,
+      features: args.features,
+      badge: args.badge,
+    });
+
+    if (oldCategory !== args.category || oldBrand !== args.brand) {
+      await adjustFacetCount(ctx.db, oldCategory, oldBrand, -1);
+      await adjustFacetCount(ctx.db, args.category, args.brand, 1);
+    }
+  },
+});
+
+export const adminDeleteProduct = mutation({
+  args: { id: v.string() }, // matches client-side 'id' which is sourceId
+  handler: async (ctx, { id }) => {
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", id))
+      .unique();
+    if (!existing) throw new Error("Product not found");
+
+    await ctx.db.delete(existing._id);
+    await adjustFacetCount(ctx.db, existing.category, existing.brand, -1);
+  },
+});

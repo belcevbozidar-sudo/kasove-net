@@ -4,7 +4,7 @@ import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
 import type { Badge, BrandSlug, CategorySlug, Product } from "./types";
 
-function toProduct(doc: Doc<"products">): Product {
+export function toProduct(doc: Doc<"products">): Product {
   const { _id, _creationTime, sourceId, hasOldPrice, ...rest } = doc;
   return {
     id: sourceId,

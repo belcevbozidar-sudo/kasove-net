@@ -52,4 +52,10 @@ export default defineSchema({
     key: v.string(),
     count: v.number(),
   }).index("by_key", ["key"]),
+
+  loginAttempts: defineTable({
+    ip: v.string(),
+    attempts: v.number(),
+    lockoutUntil: v.optional(v.number()),
+  }).index("by_ip", ["ip"]),
 });
