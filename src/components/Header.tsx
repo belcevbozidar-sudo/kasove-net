@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { brands, categories } from "@/lib/data";
+import { brands, categories, allBrands } from "@/lib/data";
 import { useCart } from "@/lib/cart-context";
 import { CartIcon, CloseIcon, MenuIcon, SearchIcon } from "./Icons";
 import CartDrawer from "./CartDrawer";
+import brandModelsData from "@/lib/models.json";
+
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -73,25 +75,195 @@ export default function Header() {
             </div>
           </div>
 
-          <nav className="hidden lg:block border-t border-border-c bg-surface/60">
-            <div className="mx-auto flex max-w-7xl items-center gap-6 container-p py-2.5 text-sm">
-              {brands.filter((b) => b.slug !== "diecast-cars").map((b) => (
-                <Link key={b.slug} href={`/brand/${b.slug}`} className="font-medium text-text-muted hover:text-accent-lime transition-colors">
-                  {b.name}
+          <nav className="hidden lg:block border-t border-border-c bg-surface/80 backdrop-blur-md">
+            <div className="mx-auto flex max-w-7xl items-center justify-between container-p py-0 text-[11px] font-bold uppercase tracking-wider text-text">
+              {/* Phone Brands (Main) */}
+              {brands
+                .filter((b) => b.slug !== "diecast-cars" && b.slug !== "other")
+                .map((b) => {
+                  const bModels = (brandModelsData as Record<string, string[]>)[b.slug] || [];
+                  return (
+                    <div key={b.slug} className="group relative py-3">
+                      <Link
+                        href={`/brand/${b.slug}`}
+                        className="text-text hover:text-accent transition-colors flex items-center gap-0.5"
+                      >
+                        {b.name}
+                        <svg className="w-2.5 h-2.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </Link>
+
+                      {/* Dropdown Menu */}
+                      {bModels.length > 0 && (
+                        <div className="absolute left-1/2 -translate-x-1/2 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                          <div className="w-80 rounded-2xl border border-border-c bg-surface p-4 shadow-2xl">
+                            <p className="text-[9px] font-extrabold text-accent uppercase tracking-widest mb-2 border-b border-border-c pb-1 text-left">
+                              Популярни модели {b.name}
+                            </p>
+                            <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 max-h-72 overflow-y-auto scrollbar-thin">
+                              {bModels.map((m) => (
+                                <Link
+                                  key={m}
+                                  href={`/shop?brand=${b.slug}&model=${encodeURIComponent(m)}`}
+                                  className="text-[10px] text-text-muted hover:text-accent hover:bg-surface-2 py-1 px-1.5 rounded transition-all font-semibold text-left normal-case"
+                                >
+                                  {m}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+              {/* Brand "Други" (Others) */}
+              <div className="group relative py-3">
+                <Link
+                  href="/shop?brand=other"
+                  className="text-text hover:text-accent transition-colors flex items-center gap-0.5"
+                >
+                  Други
+                  <svg className="w-2.5 h-2.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </Link>
-              ))}
-              <span className="ml-auto h-4 w-px bg-border-c" />
-              <Link href="/shop" className="text-text-muted hover:text-accent-lime transition-colors text-xs font-semibold whitespace-nowrap">
-                Аксесоари
-              </Link>
-              <Link href="/shop?brand=diecast-cars" className="text-text-muted hover:text-accent-lime transition-colors text-xs font-semibold whitespace-nowrap">
-                Метални колички
-              </Link>
-              <Link href="/shop" className="font-bold text-text hover:text-accent-lime text-xs whitespace-nowrap">
-                Всички продукти
-              </Link>
+                
+                {/* Dropdown of other brands */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                  <div className="w-64 rounded-2xl border border-border-c bg-surface p-4 shadow-2xl">
+                    <p className="text-[9px] font-extrabold text-accent uppercase tracking-widest mb-2 border-b border-border-c pb-1 text-left">
+                      Други марки телефони
+                    </p>
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
+                      {allBrands
+                        .filter(
+                          (b) =>
+                            !["apple", "samsung", "xiaomi", "honor", "motorola", "huawei", "universal", "other", "diecast-cars"].includes(b.slug)
+                        )
+                        .map((ob) => (
+                          <Link
+                            key={ob.slug}
+                            href={`/brand/${ob.slug}`}
+                            className="text-[10px] text-text-muted hover:text-accent hover:bg-surface-2 py-1 px-1.5 rounded transition-all font-semibold text-left"
+                          >
+                            {ob.name}
+                          </Link>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Аксесоари (Accessories) */}
+              <div className="group relative py-3">
+                <Link
+                  href="/shop"
+                  className="text-text hover:text-accent transition-colors flex items-center gap-0.5"
+                >
+                  Аксесоари
+                  <svg className="w-2.5 h-2.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </Link>
+
+                <div className="absolute left-1/2 -translate-x-1/2 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                  <div className="w-64 rounded-2xl border border-border-c bg-surface p-3 shadow-2xl">
+                    <p className="text-[9px] font-extrabold text-accent uppercase tracking-widest mb-2 border-b border-border-c pb-1 px-2 text-left">
+                      Категории аксесоари
+                    </p>
+                    <div className="flex flex-col gap-0.5">
+                      {categories.map((c) => (
+                        <Link
+                          key={c.slug}
+                          href={`/shop?category=${c.slug}`}
+                          className="text-[10px] text-text-muted hover:text-accent hover:bg-surface-2 py-1.5 px-2 rounded transition-all font-semibold text-left"
+                        >
+                          {c.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Метални колички (Diecast Cars) */}
+              <div className="group relative py-3">
+                <Link
+                  href="/shop?brand=diecast-cars"
+                  className="text-text hover:text-accent transition-colors flex items-center gap-0.5"
+                >
+                  Метални колички
+                  <svg className="w-2.5 h-2.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </Link>
+
+                <div className="absolute left-1/2 -translate-x-1/2 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                  <div className="w-56 rounded-2xl border border-border-c bg-surface p-3 shadow-2xl">
+                    <p className="text-[9px] font-extrabold text-accent uppercase tracking-widest mb-2 border-b border-border-c pb-1 px-2 text-left">
+                      Мащаби макети
+                    </p>
+                    <div className="flex flex-col gap-0.5">
+                      {[
+                        { label: "Всички колички", href: "/shop?brand=diecast-cars" },
+                        { label: "Мащаб 1:18", href: "/shop?brand=diecast-cars&scale=1:18" },
+                        { label: "Мащаб 1:24", href: "/shop?brand=diecast-cars&scale=1:24" },
+                        { label: "Мащаб 1:32", href: "/shop?brand=diecast-cars&scale=1:32" },
+                      ].map((sc) => (
+                        <Link
+                          key={sc.label}
+                          href={sc.href}
+                          className="text-[10px] text-text-muted hover:text-accent hover:bg-surface-2 py-1.5 px-2 rounded transition-all font-semibold text-left"
+                        >
+                          {sc.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Всички продукти (All products) */}
+              <div className="group relative py-3">
+                <Link
+                  href="/shop"
+                  className="text-text hover:text-accent transition-colors flex items-center gap-0.5 font-extrabold text-accent"
+                >
+                  Всички продукти
+                  <svg className="w-2.5 h-2.5 text-accent/80 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </Link>
+
+                <div className="absolute right-0 top-full z-[100] pt-2 hidden group-hover:block animate-fade-in">
+                  <div className="w-52 rounded-2xl border border-border-c bg-surface p-3 shadow-2xl">
+                    <p className="text-[9px] font-extrabold text-accent uppercase tracking-widest mb-2 border-b border-border-c pb-1 px-2 text-left">
+                      Бързи линкове
+                    </p>
+                    <div className="flex flex-col gap-0.5">
+                      {[
+                        { label: "Каталог продукти", href: "/shop" },
+                        { label: "Топ Разпродажба", href: "/shop?sort=rating" },
+                        { label: "Най-ниска цена", href: "/shop?sort=price-asc" },
+                      ].map((l) => (
+                        <Link
+                          key={l.label}
+                          href={l.href}
+                          className="text-[10px] text-text-muted hover:text-accent hover:bg-surface-2 py-1.5 px-2 rounded transition-all font-semibold text-left"
+                        >
+                          {l.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </nav>
+
         </div>
       </div>
 

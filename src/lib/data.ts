@@ -1,6 +1,7 @@
 import type { Brand, Category } from "./types";
 
-const allBrands: Brand[] = [
+export const allBrands: Brand[] = [
+
   { slug: "apple", name: "Apple", tagline: "iPhone аксесоари" },
   { slug: "samsung", name: "Samsung", tagline: "Galaxy аксесоари" },
   { slug: "xiaomi", name: "Xiaomi", tagline: "Redmi & Mi аксесоари" },
