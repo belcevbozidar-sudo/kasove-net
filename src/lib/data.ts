@@ -58,9 +58,9 @@ export const FREE_SHIPPING_THRESHOLD = 60; // 60 BGN (formatted to EUR/BGN split
 export const DEFAULT_SHIPPING_FEE = 6.95; // 6.95 BGN (formatted to EUR/BGN split)
 
 
-export function formatPrice(valueBgn: number): string {
-  const valueEur = valueBgn / 1.95583;
-  return `${valueEur.toFixed(2).replace(".", ",")} € (${valueBgn.toFixed(2).replace(".", ",")} лв.)`;
+export function formatPrice(value: number): string {
+  const bgn = value * 1.95583;
+  return `€${value.toFixed(2)} (${bgn.toFixed(2).replace(".", ",")} лв.)`;
 }
 
 export function getBrand(slug: string) {

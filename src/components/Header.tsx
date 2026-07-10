@@ -3,18 +3,29 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { brands, categories, allBrands } from "@/lib/data";
+import { brands, categories, allBrands, formatPrice } from "@/lib/data";
 import { useCart } from "@/lib/cart-context";
 import { CartIcon, CloseIcon, MenuIcon, SearchIcon } from "./Icons";
 import CartDrawer from "./CartDrawer";
 import brandModelsData from "@/lib/models.json";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
   const { itemCount, openDrawer } = useCart();
   const router = useRouter();
+
+  const searchResult = useQuery(
+    api.products.list,
+    query.trim().length >= 2
+      ? { q: query.trim(), paginationOpts: { numItems: 6, cursor: null } }
+      : "skip"
+  );
+  const suggestions = searchResult?.page || [];
 
   function submitSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -45,16 +56,73 @@ export default function Header() {
               Кейсове<span className="gradient-text">.нет</span>
             </Link>
 
-            <form onSubmit={submitSearch} className="ml-4 hidden flex-1 max-w-lg items-center gap-2 rounded-full border border-border-c bg-surface px-4 py-2.5 lg:flex">
-              <SearchIcon className="w-4 h-4 text-text-muted" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                type="text"
-                placeholder="Търси калъф, модел телефон, аксесоар..."
-                className="w-full bg-transparent text-sm outline-none placeholder:text-text-muted"
-              />
-            </form>
+            {/* Desktop Autocomplete Search */}
+            <div className="relative ml-4 hidden flex-1 max-w-lg lg:block">
+              <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-full border border-border-c bg-surface px-4 py-2.5">
+                <SearchIcon className="w-4 h-4 text-text-muted" />
+                <input
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  type="text"
+                  placeholder="Търси калъф, модел телефон, аксесоар..."
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-text-muted text-text"
+                />
+              </form>
+
+              {showDropdown && query.trim().length >= 2 && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
+                  <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl border border-border-c bg-bg p-2.5 shadow-2xl max-h-[360px] overflow-y-auto">
+                    {searchResult === undefined ? (
+                      <div className="p-4 text-center text-xs text-text-muted">Търсене...</div>
+                    ) : suggestions.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-text-muted">Няма намерени предложения</div>
+                    ) : (
+                      <div className="space-y-1">
+                        {suggestions.map((p: any) => (
+                          <Link
+                            key={p.slug}
+                            href={`/product/${p.slug}`}
+                            onClick={() => {
+                              setShowDropdown(false);
+                              setQuery("");
+                            }}
+                            className="flex items-center gap-3 rounded-xl p-2 hover:bg-surface transition-colors text-left"
+                          >
+                            <div className="h-10 w-10 shrink-0 rounded-lg bg-surface-2 overflow-hidden flex items-center justify-center border border-border-c">
+                              <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-text truncate">{p.name}</p>
+                              <p className="text-[10px] text-text-muted uppercase tracking-wider">{p.brand} · {p.model}</p>
+                            </div>
+                            <span className="text-xs font-bold text-accent-lime shrink-0">
+                              {formatPrice(p.price)}
+                            </span>
+                          </Link>
+                        ))}
+                        <div className="border-t border-border-c mt-2 pt-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              router.push(`/shop?q=${encodeURIComponent(query.trim())}`);
+                              setShowDropdown(false);
+                            }}
+                            className="text-xs font-bold text-accent hover:underline"
+                          >
+                            Виж всички резултати за "{query}"
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
 
             <div className="ml-auto flex items-center gap-1.5 sm:gap-3">
               <button
@@ -142,10 +210,10 @@ export default function Header() {
                     <div className="grid grid-cols-2 gap-2.5">
                       {allBrands
                         .filter(
-                          (b) =>
+                          (b: any) =>
                             !["apple", "samsung", "xiaomi", "honor", "motorola", "huawei", "universal", "other", "diecast-cars"].includes(b.slug)
                         )
-                        .map((ob) => (
+                        .map((ob: any) => (
                           <Link
                             key={ob.slug}
                             href={`/brand/${ob.slug}`}
@@ -284,16 +352,62 @@ export default function Header() {
               </button>
             </div>
 
-            <form onSubmit={submitSearch} className="mb-6 flex items-center gap-2 rounded-full border border-border-c bg-surface-2 px-4 py-2.5">
-              <SearchIcon className="w-4 h-4 text-text-muted" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                type="text"
-                placeholder="Търси..."
-                className="w-full bg-transparent text-sm outline-none placeholder:text-text-muted"
-              />
-            </form>
+            {/* Mobile Autocomplete Search */}
+            <div className="relative mb-6">
+              <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-full border border-border-c bg-surface-2 px-4 py-2.5">
+                <SearchIcon className="w-4 h-4 text-text-muted" />
+                <input
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  type="text"
+                  placeholder="Търси..."
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-text-muted text-text"
+                />
+              </form>
+
+              {showDropdown && query.trim().length >= 2 && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
+                  <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl border border-border-c bg-bg p-2.5 shadow-2xl max-h-[300px] overflow-y-auto">
+                    {searchResult === undefined ? (
+                      <div className="p-4 text-center text-xs text-text-muted">Търсене...</div>
+                    ) : suggestions.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-text-muted">Няма намерени предложения</div>
+                    ) : (
+                      <div className="space-y-1">
+                        {suggestions.map((p: any) => (
+                          <Link
+                            key={p.slug}
+                            href={`/product/${p.slug}`}
+                            onClick={() => {
+                              setShowDropdown(false);
+                              setMobileOpen(false);
+                              setQuery("");
+                            }}
+                            className="flex items-center gap-3 rounded-xl p-2 hover:bg-surface transition-colors text-left"
+                          >
+                            <div className="h-9 w-9 shrink-0 rounded-lg bg-surface-2 overflow-hidden flex items-center justify-center border border-border-c">
+                              <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-text truncate">{p.name}</p>
+                              <p className="text-[9px] text-text-muted uppercase tracking-wider">{p.brand} · {p.model}</p>
+                            </div>
+                            <span className="text-xs font-bold text-accent-lime shrink-0">
+                              {formatPrice(p.price)}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
 
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Марки</p>
             <ul className="mb-6 space-y-1">

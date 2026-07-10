@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { brands, categories, formatPrice } from "@/lib/data";
-import { saveProduct, deleteProduct, getGalleryImages, adminLogout } from "./actions";
+import { saveProduct, deleteProduct, adminLogout } from "./actions";
 import type { Product } from "@/lib/types";
 
 interface AdminDashboardProps {
@@ -30,18 +30,13 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   const [formFeatures, setFormFeatures] = useState<string[]>([]);
   
   // Gallery state
-  const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [selectedGallery, setSelectedGallery] = useState<string[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   const [newFeature, setNewFeature] = useState("");
   
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-
-  // Load public folder images
-  useEffect(() => {
-    getGalleryImages().then(setGalleryImages).catch(console.error);
-  }, []);
 
   const handleLogout = async () => {
     await adminLogout();
@@ -175,8 +170,19 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
   // Filter products
   const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
-                          (p.model && p.model.toLowerCase().includes(search.toLowerCase()));
+    const bObj = brands.find(b => b.slug === p.brand);
+    const cObj = categories.find(c => c.slug === p.category);
+    const searchLower = search.toLowerCase().trim();
+    
+    const matchesSearch = !searchLower ||
+      p.name.toLowerCase().includes(searchLower) ||
+      (p.model && p.model.toLowerCase().includes(searchLower)) ||
+      (bObj && bObj.name.toLowerCase().includes(searchLower)) ||
+      (cObj && cObj.shortName.toLowerCase().includes(searchLower)) ||
+      (cObj && cObj.name.toLowerCase().includes(searchLower)) ||
+      p.brand.toLowerCase().includes(searchLower) ||
+      p.category.toLowerCase().includes(searchLower);
+
     const matchesBrand = filterBrand === "all" || p.brand === filterBrand;
     const matchesCategory = filterCategory === "all" || p.category === filterCategory;
     return matchesSearch && matchesBrand && matchesCategory;
@@ -381,47 +387,33 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
               {/* Modal Body / Form */}
               <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6 flex-1">
-                {/* 1. TOP GALLERY SELECTOR */}
+                {/* 1. IMAGE URL INPUT */}
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider block">
-                      Избор на снимки от Галерията (Изберете множество)
-                    </label>
-                    <span className="text-xs text-violet-400">
-                      Избрани: {selectedGallery.length} снимки
-                    </span>
-                  </div>
-                  
-                  <div className="border border-[#27272a] bg-[#18181b]/30 rounded-xl p-4 max-h-[170px] overflow-y-auto scrollbar-thin">
-                    {galleryImages.length === 0 ? (
-                      <p className="text-xs text-[#a1a1aa] text-center py-4">Не бяха намерени снимки в папка public/images/</p>
-                    ) : (
-                      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3">
-                        {galleryImages.map((imgUrl) => {
-                          const isSelected = selectedGallery.includes(imgUrl);
-                          return (
-                            <button
-                              key={imgUrl}
-                              type="button"
-                              onClick={() => toggleGalleryImageSelection(imgUrl)}
-                              className={`relative aspect-square rounded-lg overflow-hidden bg-zinc-800 border-2 transition-all ${
-                                isSelected ? "border-violet-500 ring-2 ring-violet-500/20 scale-95" : "border-transparent opacity-60 hover:opacity-100"
-                              }`}
-                              title={imgUrl.replace("/images/", "")}
-                            >
-                              <img src={imgUrl} alt="gallery" className="h-full w-full object-cover" />
-                              {isSelected && (
-                                <div className="absolute inset-0 bg-violet-500/10 flex items-center justify-center">
-                                  <span className="bg-violet-600 text-white rounded-full h-5 w-5 flex items-center justify-center text-[10px] font-bold shadow-md">
-                                    ✓
-                                  </span>
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                  <label className="text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider block">
+                    Добавяне на линк към снимка *
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={imageUrlInput}
+                      onChange={(e) => setImageUrlInput(e.target.value)}
+                      placeholder="Въведете URL на снимка (напр. /images/case-black-silicone.png или https://...)"
+                      className="flex-1 px-3.5 py-2.5 rounded-xl border border-[#27272a] bg-[#09090b] text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (imageUrlInput.trim()) {
+                          if (!selectedGallery.includes(imageUrlInput.trim())) {
+                            setSelectedGallery([...selectedGallery, imageUrlInput.trim()]);
+                          }
+                          setImageUrlInput("");
+                        }
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-pink-600 font-semibold text-sm hover:brightness-110 shadow-lg active:scale-95 transition-all text-white"
+                    >
+                      Добави снимка
+                    </button>
                   </div>
                 </div>
 
@@ -543,7 +535,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
                   {/* Price */}
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider block">Цена (в лв.) *</label>
+                    <label className="text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider block">Цена (в EUR €) *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -558,7 +550,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
                   {/* Sale Price */}
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider block">Редовна цена преди намаление (в лв.)</label>
+                    <label className="text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider block">Редовна цена преди намаление (в EUR €)</label>
                     <input
                       type="number"
                       step="0.01"
