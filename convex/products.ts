@@ -87,23 +87,56 @@ export const list = query({
           })
           .take(1000);
         products = searchResults;
+      } else if (brand && model && model !== "all") {
+        const modelProducts = await ctx.db
+          .query("products")
+          .withIndex("by_brand_model", (qq) => qq.eq("brand", brand).eq("model", model))
+          .collect();
+        products = category ? modelProducts.filter((p) => p.category === category) : modelProducts;
+      } else if (model && model !== "all") {
+        const modelProducts = await ctx.db
+          .query("products")
+          .withIndex("by_model", (qq) => qq.eq("model", model))
+          .collect();
+        products = category ? modelProducts.filter((p) => p.category === category) : modelProducts;
       } else if (category && brand) {
         products = await ctx.db
           .query("products")
           .withIndex("by_brand_category", (qq) => qq.eq("brand", brand).eq("category", category))
           .collect();
       } else if (category) {
-        products = await ctx.db
-          .query("products")
-          .withIndex("by_category", (qq) => qq.eq("category", category))
-          .collect();
+        if (maxPrice !== undefined) {
+          products = await ctx.db
+            .query("products")
+            .withIndex("by_category_price", (qq) => qq.eq("category", category).le("price", maxPrice))
+            .collect();
+        } else {
+          products = await ctx.db
+            .query("products")
+            .withIndex("by_category", (qq) => qq.eq("category", category))
+            .collect();
+        }
       } else if (brand) {
-        products = await ctx.db
-          .query("products")
-          .withIndex("by_brand", (qq) => qq.eq("brand", brand))
-          .collect();
+        if (maxPrice !== undefined) {
+          products = await ctx.db
+            .query("products")
+            .withIndex("by_brand_price", (qq) => qq.eq("brand", brand).le("price", maxPrice))
+            .collect();
+        } else {
+          products = await ctx.db
+            .query("products")
+            .withIndex("by_brand", (qq) => qq.eq("brand", brand))
+            .collect();
+        }
       } else {
-        products = await ctx.db.query("products").collect();
+        if (maxPrice !== undefined) {
+          products = await ctx.db
+            .query("products")
+            .withIndex("by_price", (qq) => qq.le("price", maxPrice))
+            .collect();
+        } else {
+          products = await ctx.db.query("products").collect();
+        }
       }
 
       const filtered = products.filter((p) => matchesScale(p.name) && matchesModel(p) && matchesPrice(p));

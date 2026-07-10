@@ -35,10 +35,13 @@ export default defineSchema({
     .index("by_brand_rating", ["brand", "rating"])
     .index("by_rating", ["rating"])
     .index("by_hasOldPrice", ["hasOldPrice"])
+    .index("by_model", ["model"])
+    .index("by_brand_model", ["brand", "model"])
     .searchIndex("search_name", {
       searchField: "name",
       filterFields: ["category", "brand"],
     }),
+
 
   // Categories and brands are small, static reference data (~20 and ~25
   // rows) used synchronously all over client and server components, so they
