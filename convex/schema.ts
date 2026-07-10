@@ -58,4 +58,15 @@ export default defineSchema({
     attempts: v.number(),
     lockoutUntil: v.optional(v.number()),
   }).index("by_ip", ["ip"]),
+
+  slides: defineTable({
+    image: v.string(),
+    eyebrow: v.string(),
+    title: v.string(),
+    subtitle: v.string(),
+    ctaLabel: v.string(),
+    ctaHref: v.string(),
+    order: v.number(),
+  }).index("by_order", ["order"]),
 });
+

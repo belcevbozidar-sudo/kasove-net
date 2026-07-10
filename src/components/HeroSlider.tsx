@@ -4,56 +4,39 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "./Icons";
-
-interface Slide {
-  image: string;
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-  ctaLabel: string;
-  ctaHref: string;
-}
-
-const slides: Slide[] = [
-  {
-    image: "/images/hero-collection.webp",
-    eyebrow: "Нова колекция",
-    title: "Калъфи за всеки телефон, всеки стил",
-    subtitle: "Apple, Samsung, Xiaomi, Huawei, Google и OnePlus — на едно място, на топ цени.",
-    ctaLabel: "Пазарувай калъфи",
-    ctaHref: "/shop?category=silicone-cases",
-  },
-  {
-    image: "/images/hero-toys.webp",
-    eyebrow: "Метални макети",
-    title: "Колекционерски колички и детски играчки",
-    subtitle: "Изберете перфектния метален макет в мащаб 1:18, 1:24 или 1:32 на супер цена.",
-    ctaLabel: "Разгледай количките",
-    ctaHref: "/shop?category=toys",
-  },
-  {
-    image: "/images/hero-lifestyle.webp",
-    eyebrow: "Стил и защита",
-    title: "Кожени калъфи и аксесоари",
-    subtitle: "Елегантни кожени калъфи тип тефтер с магнитно закопчаване и джобове за карти.",
-    ctaLabel: "Разгледай кожени",
-    ctaHref: "/shop?category=leather-cases",
-  },
-];
-
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 export default function HeroSlider() {
+  const slides = useQuery(api.slides.list);
   const [index, setIndex] = useState(0);
 
-  const next = useCallback(() => setIndex((i) => (i + 1) % slides.length), []);
-  const prev = useCallback(() => setIndex((i) => (i - 1 + slides.length) % slides.length), []);
+  const next = useCallback(() => {
+    if (!slides || slides.length === 0) return;
+    setIndex((i) => (i + 1) % slides.length);
+  }, [slides]);
+
+  const prev = useCallback(() => {
+    if (!slides || slides.length === 0) return;
+    setIndex((i) => (i - 1 + slides.length) % slides.length);
+  }, [slides]);
 
   useEffect(() => {
+    if (!slides || slides.length <= 1) return;
     const id = setInterval(next, 5500);
     return () => clearInterval(id);
-  }, [next]);
+  }, [next, slides]);
+
+  if (!slides || slides.length === 0) {
+    return (
+      <section className="mx-auto max-w-7xl container-p pt-6 animate-pulse">
+        <div className="relative h-[420px] sm:h-[460px] lg:h-[560px] bg-surface-2 rounded-3xl" />
+      </section>
+    );
+  }
 
   const slide = slides[index];
+
 
   return (
     <section className="mx-auto max-w-7xl container-p pt-6">
