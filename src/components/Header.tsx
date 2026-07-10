@@ -57,7 +57,7 @@ export default function Header() {
             </Link>
 
             {/* Desktop Autocomplete Search */}
-            <div className="relative ml-4 hidden flex-1 max-w-lg lg:block">
+            <div className="relative mx-8 hidden flex-1 lg:block">
               <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-full border border-border-c bg-surface px-4 py-2.5">
                 <SearchIcon className="w-4 h-4 text-text-muted" />
                 <input
