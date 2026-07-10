@@ -1,49 +1,9 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
 import { brands, categories } from "@/lib/data";
-import { CheckIcon } from "./Icons";
 
 export default function Footer() {
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-
   return (
-    <footer className="mt-20 border-t border-border-c bg-surface">
-      <div className="mx-auto max-w-7xl container-p py-10">
-        <div className="rounded-2xl gradient-brand p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-5">
-          <div>
-            <h3 className="font-heading text-xl sm:text-2xl font-bold text-white">-10% за първата ти поръчка</h3>
-            <p className="text-white/85 text-sm mt-1">Абонирай се за нашия бюлетин и получи код за отстъпка веднага.</p>
-          </div>
-          {subscribed ? (
-            <div className="flex items-center gap-2 rounded-full bg-white/15 px-5 py-3 text-white font-semibold">
-              <CheckIcon className="w-5 h-5" /> Благодарим! Провери имейла си.
-            </div>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (email.includes("@")) setSubscribed(true);
-              }}
-              className="flex w-full max-w-md gap-2"
-            >
-              <input
-                required
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Твоят имейл"
-                className="w-full rounded-full border-0 bg-white/95 px-4 py-3 text-sm text-neutral-900 outline-none placeholder:text-neutral-500"
-              />
-              <button className="shrink-0 rounded-full bg-neutral-900 px-5 py-3 text-sm font-semibold text-white hover:brightness-125">
-                Абонирай се
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
+    <footer className="mt-20 border-t border-border-c bg-surface pt-12">
 
       <div className="mx-auto max-w-7xl container-p grid grid-cols-2 gap-8 pb-12 sm:grid-cols-2 lg:grid-cols-5">
         <div className="col-span-2 lg:col-span-1">
