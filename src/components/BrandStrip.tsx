@@ -7,8 +7,12 @@ export default function BrandStrip() {
   return (
     <section className="mx-auto max-w-7xl container-p py-10">
       <SectionHeading eyebrow="Пазарувай по марка" title="Намери аксесоари за твоя телефон" />
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-        {brands.map((b) => (
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 lg:grid-cols-6 max-w-4xl mx-auto">
+
+        {brands
+          .filter((b) => b.slug !== "other" && b.slug !== "diecast-cars")
+          .map((b) => (
+
           <Link
             key={b.slug}
             href={`/brand/${b.slug}`}

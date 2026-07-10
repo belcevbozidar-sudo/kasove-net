@@ -27,7 +27,7 @@ const allBrands: Brand[] = [
   { slug: "acer", name: "Acer", tagline: "Acer аксесоари" },
   { slug: "meizu", name: "Meizu", tagline: "Meizu аксесоари" },
   { slug: "universal", name: "Универсални", tagline: "Аксесоари за всички телефони" },
-  { slug: "other", name: "Други марки и аксесоари", tagline: "Аксесоари за други марки" },
+  { slug: "other", name: "Други", tagline: "Аксесоари за други марки" },
   { slug: "diecast-cars", name: "Метални колички", tagline: "Колекционерски метални колички" }
 ];
 
@@ -38,9 +38,10 @@ export const brands: Brand[] = [
   { slug: "honor", name: "Honor", tagline: "Honor аксесоари" },
   { slug: "motorola", name: "Motorola", tagline: "Moto аксесоари" },
   { slug: "huawei", name: "Huawei", tagline: "Huawei аксесоари" },
-  { slug: "other", name: "Други марки и аксесоари", tagline: "Аксесоари за други марки" },
+  { slug: "other", name: "Други", tagline: "Аксесоари за други марки" },
   { slug: "diecast-cars", name: "Метални колички", tagline: "Колекционерски метални колички" }
 ];
+
 
 export const categories: Category[] = [
   { slug: "silicone-cases", name: "Силиконови калъфи", shortName: "Силиконови", icon: "case" },

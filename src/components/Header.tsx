@@ -75,13 +75,13 @@ export default function Header() {
 
           <nav className="hidden lg:block border-t border-border-c bg-surface/60">
             <div className="mx-auto flex max-w-7xl items-center gap-6 container-p py-2.5 text-sm">
-              {brands.map((b) => (
+              {brands.filter((b) => b.slug !== "diecast-cars").map((b) => (
                 <Link key={b.slug} href={`/brand/${b.slug}`} className="font-medium text-text-muted hover:text-accent-lime transition-colors">
                   {b.name}
                 </Link>
               ))}
               <span className="ml-auto h-4 w-px bg-border-c" />
-              {categories.map((c) => (
+              {categories.filter((c) => c.slug !== "silicone-cases" && c.slug !== "hard-cases" && c.slug !== "leather-cases").map((c) => (
                 <Link key={c.slug} href={`/shop?category=${c.slug}`} className="text-text-muted hover:text-accent-lime transition-colors text-xs font-semibold whitespace-nowrap">
                   {c.shortName}
                 </Link>
@@ -121,7 +121,7 @@ export default function Header() {
 
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Марки</p>
             <ul className="mb-6 space-y-1">
-              {brands.map((b) => (
+              {brands.filter((b) => b.slug !== "diecast-cars").map((b) => (
                 <li key={b.slug}>
                   <Link
                     href={`/brand/${b.slug}`}
@@ -136,7 +136,7 @@ export default function Header() {
 
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Категории</p>
             <ul className="mb-6 space-y-1">
-              {categories.map((c) => (
+              {categories.filter((c) => c.slug !== "silicone-cases" && c.slug !== "hard-cases" && c.slug !== "leather-cases").map((c) => (
                 <li key={c.slug}>
                   <Link
                     href={`/shop?category=${c.slug}`}
