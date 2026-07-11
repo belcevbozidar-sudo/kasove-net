@@ -160,7 +160,7 @@ export async function getBundleProducts(product: Product): Promise<Product[]> {
       const protectors = result.page.map(toProduct);
       
       // Filter protectors whose name contains ALL words of the case model name
-      const compatible = protectors.filter(p => {
+      const compatible = protectors.filter((p: any) => {
         const nameLower = p.name.toLowerCase();
         const modelLower = p.model ? p.model.toLowerCase() : "";
         return modelWords.every(word => nameLower.includes(word) || modelLower.includes(word));

@@ -41,7 +41,7 @@ export default function HeroSlider() {
   return (
     <section className="mx-auto max-w-7xl container-p pt-6">
       <div className="relative h-[420px] sm:h-[460px] lg:h-[560px] overflow-hidden rounded-3xl border border-border-c">
-        {slides.map((s, i) => (
+        {slides.map((s: any, i: number) => (
           <Image
             key={s.image}
             src={s.image}
@@ -87,7 +87,7 @@ export default function HeroSlider() {
         </button>
 
         <div className="absolute bottom-5 right-6 z-10 flex gap-2">
-          {slides.map((s, i) => (
+          {slides.map((s: any, i: number) => (
             <button
               key={s.image}
               onClick={() => setIndex(i)}

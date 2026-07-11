@@ -1,7 +1,8 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, action } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import type { Doc } from "./_generated/dataModel";
+import { api } from "./_generated/api";
 
 const SORTS = v.optional(
   v.union(v.literal("featured"), v.literal("price-asc"), v.literal("price-desc"), v.literal("rating"))
@@ -765,4 +766,127 @@ export const getManyBySlugs = query({
     return results;
   },
 });
+
+export const listForMigration = query({
+  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { cursor, limit }) => {
+    return await ctx.db
+      .query("products")
+      .paginate({ cursor, numItems: limit });
+  },
+});
+
+export const updateProductImageUrls = mutation({
+  args: {
+    id: v.id("products"),
+    image: v.string(),
+    gallery: v.array(v.string()),
+  },
+  handler: async (ctx, { id, image, gallery }) => {
+    await ctx.db.patch(id, { image, gallery });
+  },
+});
+
+export const migrateImagesBatch = action({
+  args: { cursor: v.optional(v.string()), limit: v.number() },
+  handler: async (ctx, { cursor, limit }): Promise<{
+    continueCursor: string;
+    isDone: boolean;
+    processedCount: number;
+    migratedCount: number;
+    errorCount: number;
+  }> => {
+    const result: any = await ctx.runQuery("products:listForMigration" as any, {
+      cursor: cursor ?? null,
+      limit,
+    });
+
+    let migratedCount = 0;
+    let errorCount = 0;
+
+    for (const p of result.page) {
+      try {
+        let needsUpdate = false;
+        let newImage = p.image;
+        const newGallery = [...p.gallery];
+        const promises: Promise<void>[] = [];
+
+        // Migrate main image
+        if (p.image && p.image.includes("keisove.net")) {
+          const promise = downloadAndUpload(ctx, p.image).then(async (storageId) => {
+            if (storageId) {
+              const publicUrl = await ctx.storage.getUrl(storageId);
+              if (publicUrl) {
+                newImage = publicUrl;
+                needsUpdate = true;
+              }
+            }
+          });
+          promises.push(promise);
+        }
+
+        // Migrate gallery images
+        for (let i = 0; i < p.gallery.length; i++) {
+          const imgUrl = p.gallery[i];
+          if (imgUrl && imgUrl.includes("keisove.net")) {
+            const promise = downloadAndUpload(ctx, imgUrl).then(async (storageId) => {
+              if (storageId) {
+                const publicUrl = await ctx.storage.getUrl(storageId);
+                if (publicUrl) {
+                  newGallery[i] = publicUrl;
+                  needsUpdate = true;
+                }
+              }
+            });
+            promises.push(promise);
+          }
+        }
+
+        if (promises.length > 0) {
+          await Promise.all(promises);
+        }
+
+        if (needsUpdate) {
+          await ctx.runMutation("products:updateProductImageUrls" as any, {
+            id: p._id,
+            image: newImage,
+            gallery: newGallery,
+          });
+          migratedCount++;
+        }
+      } catch (err) {
+        console.error(`Failed to migrate product ${p._id}:`, err);
+        errorCount++;
+      }
+    }
+
+    return {
+      continueCursor: result.continueCursor,
+      isDone: result.isDone,
+      processedCount: result.page.length,
+      migratedCount,
+      errorCount,
+    };
+  },
+});
+
+async function downloadAndUpload(ctx: any, url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const arrayBuffer = await res.arrayBuffer();
+
+    let contentType = "image/jpeg";
+    if (url.toLowerCase().endsWith(".png")) contentType = "image/png";
+    if (url.toLowerCase().endsWith(".webp")) contentType = "image/webp";
+    if (url.toLowerCase().endsWith(".svg")) contentType = "image/svg+xml";
+
+    const blob = new Blob([arrayBuffer], { type: contentType });
+    const storageId = await ctx.storage.store(blob);
+    return storageId;
+  } catch (err) {
+    console.error(`Error downloading/uploading ${url}:`, err);
+    return null;
+  }
+}
 
