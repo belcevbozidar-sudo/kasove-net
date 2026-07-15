@@ -824,9 +824,35 @@ export const getStorageAuditPage = query({
         url: await ctx.storage.getUrl(f._id),
         sha256: f.sha256,
         size: f.size,
+        contentType: f.contentType,
       });
     }
     return { isDone: page.isDone, continueCursor: page.continueCursor, items };
+  },
+});
+
+export const setFacetCounts = mutation({
+  args: { entries: v.array(v.object({ key: v.string(), count: v.number() })) },
+  handler: async (ctx, { entries }) => {
+    for (const { key, count } of entries) {
+      const existing = await ctx.db
+        .query("facetCounts")
+        .withIndex("by_key", (q) => q.eq("key", key))
+        .unique();
+      if (existing) {
+        if (existing.count !== count) await ctx.db.patch(existing._id, { count });
+      } else {
+        await ctx.db.insert("facetCounts", { key, count });
+      }
+    }
+    return entries.length;
+  },
+});
+
+export const listFacetCounts = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("facetCounts").collect();
   },
 });
 
