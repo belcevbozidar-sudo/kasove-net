@@ -787,106 +787,75 @@ export const updateProductImageUrls = mutation({
   },
 });
 
-export const migrateImagesBatch = action({
-  args: { cursor: v.optional(v.string()), limit: v.number() },
-  handler: async (ctx, { cursor, limit }): Promise<{
-    continueCursor: string;
-    isDone: boolean;
-    processedCount: number;
-    migratedCount: number;
-    errorCount: number;
-  }> => {
-    const result: any = await ctx.runQuery("products:listForMigration" as any, {
-      cursor: cursor ?? null,
-      limit,
-    });
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
+  },
+});
 
-    let migratedCount = 0;
-    let errorCount = 0;
+export const getUrlFromStorageId = query({
+  args: { storageId: v.string() },
+  handler: async (ctx, { storageId }) => {
+    return await ctx.storage.getUrl(storageId);
+  },
+});
 
-    for (const p of result.page) {
-      try {
-        let needsUpdate = false;
-        let newImage = p.image;
-        const newGallery = [...p.gallery];
-        const promises: Promise<void>[] = [];
-
-        // Migrate main image
-        if (p.image && p.image.includes("keisove.net")) {
-          const promise = downloadAndUpload(ctx, p.image).then(async (storageId) => {
-            if (storageId) {
-              const publicUrl = await ctx.storage.getUrl(storageId);
-              if (publicUrl) {
-                newImage = publicUrl;
-                needsUpdate = true;
-              }
-            }
-          });
-          promises.push(promise);
-        }
-
-        // Migrate gallery images
-        for (let i = 0; i < p.gallery.length; i++) {
-          const imgUrl = p.gallery[i];
-          if (imgUrl && imgUrl.includes("keisove.net")) {
-            const promise = downloadAndUpload(ctx, imgUrl).then(async (storageId) => {
-              if (storageId) {
-                const publicUrl = await ctx.storage.getUrl(storageId);
-                if (publicUrl) {
-                  newGallery[i] = publicUrl;
-                  needsUpdate = true;
-                }
-              }
-            });
-            promises.push(promise);
-          }
-        }
-
-        if (promises.length > 0) {
-          await Promise.all(promises);
-        }
-
-        if (needsUpdate) {
-          await ctx.runMutation("products:updateProductImageUrls" as any, {
-            id: p._id,
-            image: newImage,
-            gallery: newGallery,
-          });
-          migratedCount++;
-        }
-      } catch (err) {
-        console.error(`Failed to migrate product ${p._id}:`, err);
-        errorCount++;
-      }
-    }
-
+export const getStoragePage = query({
+  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { cursor, limit }) => {
+    const page = await ctx.db.system.query("_storage").paginate({ cursor, numItems: limit });
     return {
-      continueCursor: result.continueCursor,
-      isDone: result.isDone,
-      processedCount: result.page.length,
-      migratedCount,
-      errorCount,
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+      items: page.page.map((f) => f.size),
     };
   },
 });
 
-async function downloadAndUpload(ctx: any, url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-    const arrayBuffer = await res.arrayBuffer();
+export const getProductsPage = query({
+  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { cursor, limit }) => {
+    const page = await ctx.db.query("products").paginate({ cursor, numItems: limit });
+    return {
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+      items: page.page.map((p) => ({
+        hasImage: !!p.image,
+        galleryCount: p.gallery ? p.gallery.length : 0,
+      })),
+    };
+  },
+});
 
-    let contentType = "image/jpeg";
-    if (url.toLowerCase().endsWith(".png")) contentType = "image/png";
-    if (url.toLowerCase().endsWith(".webp")) contentType = "image/webp";
-    if (url.toLowerCase().endsWith(".svg")) contentType = "image/svg+xml";
-
-    const blob = new Blob([arrayBuffer], { type: contentType });
-    const storageId = await ctx.storage.store(blob);
-    return storageId;
-  } catch (err) {
-    console.error(`Error downloading/uploading ${url}:`, err);
-    return null;
-  }
-}
+export const getProductImageDomains = query({
+  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { cursor, limit }) => {
+    const page = await ctx.db.query("products").paginate({ cursor, numItems: limit });
+    return {
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+      items: page.page.map((p) => {
+        const isKeisoveMain = p.image ? p.image.includes("keisove.net") : false;
+        const isConvexMain = p.image ? p.image.includes("convex.cloud") : false;
+        
+        let keisoveGalleryCount = 0;
+        let convexGalleryCount = 0;
+        if (p.gallery) {
+          for (const img of p.gallery) {
+            if (img.includes("keisove.net")) keisoveGalleryCount++;
+            if (img.includes("convex.cloud")) convexGalleryCount++;
+          }
+        }
+        
+        return {
+          isKeisoveMain,
+          isConvexMain,
+          keisoveGalleryCount,
+          convexGalleryCount,
+        };
+      }),
+    };
+  },
+});
 

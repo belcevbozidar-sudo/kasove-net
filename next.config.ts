@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         hostname: "keisove.net",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "**.convex.cloud",
+        pathname: "/**",
+      },
     ],
   },
 };
