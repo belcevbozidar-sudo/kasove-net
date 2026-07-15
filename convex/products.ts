@@ -813,6 +813,33 @@ export const getStoragePage = query({
   },
 });
 
+export const getStorageAuditPage = query({
+  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { cursor, limit }) => {
+    const page = await ctx.db.system.query("_storage").paginate({ cursor, numItems: limit });
+    const items = [];
+    for (const f of page.page) {
+      items.push({
+        id: f._id,
+        url: await ctx.storage.getUrl(f._id),
+        sha256: f.sha256,
+        size: f.size,
+      });
+    }
+    return { isDone: page.isDone, continueCursor: page.continueCursor, items };
+  },
+});
+
+export const deleteStorageFiles = mutation({
+  args: { ids: v.array(v.id("_storage")) },
+  handler: async (ctx, { ids }) => {
+    for (const id of ids) {
+      await ctx.storage.delete(id);
+    }
+    return ids.length;
+  },
+});
+
 export const getProductsPage = query({
   args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
   handler: async (ctx, { cursor, limit }) => {
