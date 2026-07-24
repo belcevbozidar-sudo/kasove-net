@@ -4,6 +4,7 @@ import SidebarFilters from "@/components/SidebarFilters";
 import ProductCard from "@/components/ProductCard";
 import BrandModelSelector from "@/components/BrandModelSelector";
 import { getBrand, getCategory, categories, brands } from "@/lib/data";
+import { formatModelDisplay } from "@/lib/format-model";
 import { filterProducts } from "@/lib/products-server";
 import { decodeCursor, decodeHistory, nextLinkParams, prevLinkParams } from "@/lib/pagination";
 import brandModelsData from "@/lib/models.json";
@@ -87,7 +88,12 @@ export default async function ShopPage({
     continueCursor = res.continueCursor;
   }
 
-  const title = [brand?.name, sp.model, category?.name].filter(Boolean).join(" · ") || "Всички продукти";
+  // formatModelDisplay already prefixes the brand name onto the model (e.g.
+  // "Samsung S24 Ultra"), so when both are present, drop the separate brand
+  // segment below to avoid showing the brand name twice.
+  const modelTitlePart = sp.model && sp.brand ? formatModelDisplay(sp.brand, sp.model) : sp.model;
+  const titleParts = sp.model && sp.brand ? [modelTitlePart, category?.name] : [brand?.name, modelTitlePart, category?.name];
+  const title = titleParts.filter(Boolean).join(" · ") || "Всички продукти";
 
   return (
     <div className="mx-auto max-w-7xl container-p py-10">

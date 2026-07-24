@@ -212,10 +212,12 @@ export interface FilterResult {
   continueCursor: string;
 }
 
-const VALID_SORTS = new Set(["featured", "price-asc", "price-desc", "rating"]);
+const VALID_SORTS = new Set(["featured", "price-asc", "price-desc", "rating", "newest"]);
 
 export async function filterProducts(opts: FilterOptions): Promise<FilterResult> {
-  const sort = opts.sort && VALID_SORTS.has(opts.sort) ? (opts.sort as "featured" | "price-asc" | "price-desc" | "rating") : undefined;
+  const sort = opts.sort && VALID_SORTS.has(opts.sort)
+    ? (opts.sort as "featured" | "price-asc" | "price-desc" | "rating" | "newest")
+    : undefined;
   const result = await fetchQuery(api.products.list, {
     brand: opts.brand && opts.brand !== "all" ? opts.brand : undefined,
     category: opts.category && opts.category !== "all" ? opts.category : undefined,

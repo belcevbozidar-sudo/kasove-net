@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { brands, categories, allBrands, formatPrice } from "@/lib/data";
+import { brands, allBrands, formatPrice } from "@/lib/data";
+import { formatModelDisplay } from "@/lib/format-model";
 import { useCart } from "@/lib/cart-context";
 import { CartIcon, CloseIcon, MenuIcon, SearchIcon } from "./Icons";
 import CartDrawer from "./CartDrawer";
@@ -12,11 +13,13 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { categoryMenuData } from "@/lib/category-menu-data";
 
+const BRAND_DROPDOWN_VISIBLE_LIMIT = 42; // 7 rows x 6 columns (the nav is desktop-only, lg = 6 cols)
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [activeMenuCat, setActiveMenuCat] = useState("gsm-accessories");
+  const [activeMenuCat, setActiveMenuCat] = useState("brands");
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -102,7 +105,9 @@ export default function Header() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-text truncate">{p.name}</p>
-                              <p className="text-[10px] text-text-muted uppercase tracking-wider">{p.brand} · {p.model}</p>
+                              <p className="text-[10px] text-text-muted uppercase tracking-wider">
+                                {formatModelDisplay(p.brand, p.model)}
+                              </p>
                             </div>
                             <span className="text-xs font-bold text-accent-lime shrink-0">
                               {formatPrice(p.price)}
@@ -136,22 +141,35 @@ export default function Header() {
               >
                 <SearchIcon className="w-5 h-5" />
               </button>
-              {/* Categories Dropdown Menu Button (Desktop only) */}
-              <div className="hidden lg:block group relative">
-                <button className="flex items-center gap-1.5 rounded-xl border border-border-c bg-surface px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-text hover:text-accent hover:border-accent transition-all cursor-pointer">
-                  <svg className="w-4 h-4 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <button onClick={openDrawer} className="relative rounded-lg p-2 hover:bg-surface" aria-label="Количка">
+                <CartIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-accent-2 px-1 text-[10px] font-bold text-white">
+                    {itemCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <nav className="hidden lg:block border-t border-border-c bg-surface/90 backdrop-blur-md">
+            <div className="mx-auto flex max-w-7xl items-center justify-between container-p py-0 text-[13px] font-extrabold uppercase tracking-wide text-text relative">
+              {/* Категории — full-site sitemap mega-menu (first item) */}
+              <div className="group relative py-4">
+                <button className="flex items-center gap-1.5 text-text hover:text-accent transition-colors py-1 cursor-pointer">
+                  <svg className="w-3.5 h-3.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
-                  <span>Категории</span>
-                  <svg className="w-2.5 h-2.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                  Категории
+                  <svg className="w-3 h-3 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
-                {/* Mega Menu Flyout Panel */}
-                <div className="absolute right-0 top-full z-[120] pt-2.5 hidden group-hover:block animate-fade-in">
+                {/* Mega Menu Flyout Panel — the whole site, organized */}
+                <div className="absolute left-0 top-full z-[120] pt-2 hidden group-hover:block animate-fade-in">
                   <div className="w-[52rem] rounded-3xl border border-border-c bg-surface shadow-2xl overflow-hidden flex h-[480px]">
-                    {/* Left side list of main categories */}
+                    {/* Left side list of main sections */}
                     <div className="w-[20rem] border-r border-border-c overflow-y-auto scrollbar-thin py-3 bg-surface-2/30">
                       {categoryMenuData.map((cat) => (
                         <Link
@@ -219,30 +237,27 @@ export default function Header() {
                 </div>
               </div>
 
-              <button onClick={openDrawer} className="relative rounded-lg p-2 hover:bg-surface" aria-label="Количка">
-                <CartIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-accent-2 px-1 text-[10px] font-bold text-white">
-                    {itemCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
+              {/* Нови продукти (second item) */}
+              <Link href="/new-products" className="py-4 text-text hover:text-accent transition-colors">
+                Нови продукти
+              </Link>
 
-          <nav className="hidden lg:block border-t border-border-c bg-surface/90 backdrop-blur-md">
-            <div className="mx-auto flex max-w-7xl items-center justify-between container-p py-0 text-[13px] font-extrabold uppercase tracking-wide text-text relative">
               {/* Phone Brands (Main) */}
               {brands
                 .filter((b) => b.slug !== "diecast-cars" && b.slug !== "other")
                 .map((b) => {
                   const bModels = (brandModelsData as Record<string, string[]>)[b.slug] || [];
+                  const isExpanded = expandedMenu === b.slug;
+                  const visibleModels = isExpanded ? bModels : bModels.slice(0, BRAND_DROPDOWN_VISIBLE_LIMIT);
                   return (
                     <div
                       key={b.slug}
                       className="group py-4"
                       onMouseEnter={() => setHoveredMenu(b.slug)}
-                      onMouseLeave={() => setHoveredMenu(null)}
+                      onMouseLeave={() => {
+                        setHoveredMenu(null);
+                        setExpandedMenu(null);
+                      }}
                     >
                       <Link
                         href={`/brand/${b.slug}`}
@@ -263,7 +278,7 @@ export default function Header() {
                               Популярни модели {b.name}
                             </p>
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-4 gap-y-2">
-                              {bModels.map((m) => (
+                              {visibleModels.map((m) => (
                                 <Link
                                   key={m}
                                   href={`/shop?brand=${b.slug}&model=${encodeURIComponent(m)}`}
@@ -274,6 +289,18 @@ export default function Header() {
                                 </Link>
                               ))}
                             </div>
+                            {bModels.length > BRAND_DROPDOWN_VISIBLE_LIMIT && !isExpanded && (
+                              <button
+                                type="button"
+                                onClick={() => setExpandedMenu(b.slug)}
+                                className="mt-4 flex items-center gap-2 rounded-full gradient-brand px-5 py-2 text-xs font-extrabold text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer normal-case tracking-normal"
+                              >
+                                Покажи всички модели ({bModels.length})
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </button>
+                            )}
                           </div>
                         </div>
                       )}
@@ -325,44 +352,6 @@ export default function Header() {
                 </div>
               </div>
 
-              {/* Аксесоари (Accessories) */}
-              <div
-                className="group py-4"
-                onMouseEnter={() => setHoveredMenu("accessories")}
-                onMouseLeave={() => setHoveredMenu(null)}
-              >
-                <Link
-                  href="/shop"
-                  onClick={() => setHoveredMenu(null)}
-                  className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
-                >
-                  Аксесоари
-                  <svg className="w-3 h-3 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </Link>
-
-                <div className={`absolute left-0 right-0 w-full top-full z-[100] pt-2 ${hoveredMenu === "accessories" ? "block" : "hidden"} animate-fade-in`}>
-                  <div className="w-full rounded-3xl border border-border-c bg-surface p-6 shadow-2xl">
-                    <p className="text-sm font-extrabold text-accent uppercase tracking-wider mb-4 border-b border-border-c pb-2 text-left">
-                      Категории аксесоари
-                    </p>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-4 gap-y-2">
-                      {categories.map((c) => (
-                        <Link
-                          key={c.slug}
-                          href={`/shop?category=${c.slug}`}
-                          onClick={() => setHoveredMenu(null)}
-                          className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
-                        >
-                          • {c.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Метални колички (Diecast Cars) */}
               <div
                 className="group relative py-4"
@@ -399,48 +388,6 @@ export default function Header() {
                           className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                         >
                           • {sc.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Всички продукти (All products) */}
-              <div
-                className="group relative py-4"
-                onMouseEnter={() => setHoveredMenu("all-products")}
-                onMouseLeave={() => setHoveredMenu(null)}
-              >
-                <Link
-                  href="/shop"
-                  onClick={() => setHoveredMenu(null)}
-                  className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1 font-extrabold text-accent"
-                >
-                  Всички продукти
-                  <svg className="w-3 h-3 text-accent/80 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </Link>
-
-                <div className={`absolute right-0 top-full z-[100] pt-2 ${hoveredMenu === "all-products" ? "block" : "hidden"} animate-fade-in`}>
-                  <div className="w-64 rounded-3xl border border-border-c bg-surface p-4 shadow-2xl">
-                    <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-3 border-b border-border-c pb-1.5 px-2 text-left">
-                      Бързи линкове
-                    </p>
-                    <div className="flex flex-col gap-1.5 pt-1">
-                      {[
-                        { label: "Каталог продукти", href: "/shop" },
-                        { label: "Топ Разпродажба", href: "/shop?sort=rating" },
-                        { label: "Най-ниска цена", href: "/shop?sort=price-asc" },
-                      ].map((l) => (
-                        <Link
-                          key={l.label}
-                          href={l.href}
-                          onClick={() => setHoveredMenu(null)}
-                          className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
-                        >
-                          • {l.label}
                         </Link>
                       ))}
                     </div>
@@ -511,7 +458,9 @@ export default function Header() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-text truncate">{p.name}</p>
-                              <p className="text-[9px] text-text-muted uppercase tracking-wider">{p.brand} · {p.model}</p>
+                              <p className="text-[9px] text-text-muted uppercase tracking-wider">
+                                {formatModelDisplay(p.brand, p.model)}
+                              </p>
                             </div>
                             <span className="text-xs font-bold text-accent-lime shrink-0">
                               {formatPrice(p.price)}
@@ -544,11 +493,11 @@ export default function Header() {
             <ul className="mb-6 space-y-1">
               <li>
                 <Link
-                  href="/shop"
+                  href="/new-products"
                   onClick={() => setMobileOpen(false)}
                   className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
                 >
-                  Аксесоари
+                  Нови продукти
                 </Link>
               </li>
               <li>
@@ -558,15 +507,6 @@ export default function Header() {
                   className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
                 >
                   Метални колички
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/shop"
-                  onClick={() => setMobileOpen(false)}
-                  className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
-                >
-                  Всички продукти
                 </Link>
               </li>
             </ul>

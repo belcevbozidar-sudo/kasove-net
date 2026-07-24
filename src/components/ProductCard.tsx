@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { formatPrice, getBrand } from "@/lib/data";
+import { formatPrice } from "@/lib/data";
+import { formatModelDisplay } from "@/lib/format-model";
 import type { Product } from "@/lib/types";
 import StarRating from "./StarRating";
 import { useCart } from "@/lib/cart-context";
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
-  const brand = getBrand(product.brand);
   const discountPct = product.oldPrice
     ? Math.round(100 - (product.price / product.oldPrice) * 100)
     : null;
@@ -39,7 +39,7 @@ export default function ProductCard({ product }: { product: Product }) {
       </Link>
       <div className="flex flex-1 flex-col gap-2 p-3.5">
         <span className="text-[11px] uppercase tracking-wide text-text-muted">
-          {brand?.name} · {product.model}
+          {formatModelDisplay(product.brand, product.model)}
         </span>
         <Link href={`/product/${product.slug}`} className="font-heading text-sm font-semibold leading-snug line-clamp-2 hover:text-accent transition-colors">
           {product.name}

@@ -6,12 +6,17 @@ import ProductTabs from "@/components/ProductTabs";
 import ProductRail from "@/components/ProductRail";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import { getBrand, getCategory } from "@/lib/data";
+import { formatModelDisplay } from "@/lib/format-model";
 import { getBundleProducts, getProductBySlug, getRelatedProducts } from "@/lib/products-server";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  return { title: product ? `${product.name} — ${product.model} | Кейсове.нет` : "Кейсове.нет" };
+  return {
+    title: product
+      ? `${product.name} — ${formatModelDisplay(product.brand, product.model)} | Кейсове.нет`
+      : "Кейсове.нет",
+  };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {

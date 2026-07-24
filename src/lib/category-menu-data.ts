@@ -1,3 +1,5 @@
+import { allBrands } from "./data";
+
 export interface MenuSubcategory {
   name: string;
   href: string;
@@ -11,6 +13,22 @@ export interface MenuCategory {
 }
 
 export const categoryMenuData: MenuCategory[] = [
+  {
+    name: "МАРКИ",
+    slug: "brands",
+    href: "/shop",
+    subcategories: allBrands.map((b) => ({ name: b.name, href: `/brand/${b.slug}` })),
+  },
+  {
+    name: "НОВИ ПРОДУКТИ",
+    slug: "new-products",
+    href: "/new-products",
+  },
+  {
+    name: "МЕТАЛНИ КОЛИЧКИ",
+    slug: "diecast-cars",
+    href: "/shop?brand=diecast-cars",
+  },
   {
     name: "GSM АКСЕСОАРИ",
     slug: "gsm-accessories",

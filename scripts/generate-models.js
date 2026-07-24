@@ -99,6 +99,11 @@ function cleanModelName(model, brand) {
   cleaned = cleaned.replace(brandRegex, "");
   cleaned = cleaned.replace(/^apple\s+/i, ""); // extra fallback for Apple
 
+  // 9b. Strip "Galaxy" wherever it appears — Samsung listings should read
+  // "S24", not "Galaxy S24" / "Samsung Galaxy S24", so "Galaxy S24" and "S24"
+  // don't end up as two separate entries after dedup.
+  cleaned = cleaned.replace(/\bgalaxy\b\s*/gi, "");
+
   // 10. Split by "серия", "series", "usb-c", etc. (no \b for Cyrillic compatibility)
   cleaned = cleaned.split(/\s+(?:серия|series|usb-c|cable|charger|w\s+woven|woven)/i)[0];
 
@@ -182,6 +187,9 @@ function cleanModelName(model, brand) {
     cleaned = "iPad" + cleaned.substring(4);
   }
 
+  // Collapse any leftover double spaces left by the strips above
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+
   return cleaned;
 }
 
@@ -220,9 +228,15 @@ async function run() {
         const cleaned = cleanModelName(model.trim(), brand);
         if (cleaned) {
           if (!brandModels[brand]) {
-            brandModels[brand] = new Set();
+            // Keyed by a normalized (lowercase) form so case/whitespace-only
+            // variants (e.g. "Redmi Go" vs "Redmi GO") collapse to one entry;
+            // the first-seen casing is kept as the display value.
+            brandModels[brand] = new Map();
           }
-          brandModels[brand].add(cleaned);
+          const dedupeKey = cleaned.toLowerCase();
+          if (!brandModels[brand].has(dedupeKey)) {
+            brandModels[brand].set(dedupeKey, cleaned);
+          }
         }
       }
     }
@@ -407,10 +421,10 @@ function getModelWeight(name, brand) {
   return 0;
 }
 
-// Convert sets to sorted arrays using chronological weight
+// Convert maps to sorted arrays using chronological weight
 const output = {};
 for (const brand in brandModels) {
-  output[brand] = Array.from(brandModels[brand]).sort((a, b) => {
+  output[brand] = Array.from(brandModels[brand].values()).sort((a, b) => {
     const wA = getModelWeight(a, brand);
     const wB = getModelWeight(b, brand);
     if (wA !== wB) {

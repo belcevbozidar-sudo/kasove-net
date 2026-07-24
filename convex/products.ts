@@ -5,7 +5,13 @@ import type { Doc } from "./_generated/dataModel";
 import { api } from "./_generated/api";
 
 const SORTS = v.optional(
-  v.union(v.literal("featured"), v.literal("price-asc"), v.literal("price-desc"), v.literal("rating"))
+  v.union(
+    v.literal("featured"),
+    v.literal("price-asc"),
+    v.literal("price-desc"),
+    v.literal("rating"),
+    v.literal("newest")
+  )
 );
 
 function facetKey(category?: string, brand?: string) {
@@ -256,6 +262,14 @@ export const list = query({
           .paginate(paginationOpts);
         return { ...result, totalCount };
       }
+      if (sort === "newest") {
+        const result = await ctx.db
+          .query("products")
+          .withIndex("by_category", (qq) => qq.eq("category", category))
+          .order("desc")
+          .paginate(paginationOpts);
+        return { ...result, totalCount };
+      }
       const indexName = sort === "rating" ? "by_category_rating" : "by_category_price";
       const result = await ctx.db
         .query("products")
@@ -273,6 +287,14 @@ export const list = query({
           .paginate(paginationOpts);
         return { ...result, totalCount };
       }
+      if (sort === "newest") {
+        const result = await ctx.db
+          .query("products")
+          .withIndex("by_brand", (qq) => qq.eq("brand", brand))
+          .order("desc")
+          .paginate(paginationOpts);
+        return { ...result, totalCount };
+      }
       const indexName = sort === "rating" ? "by_brand_rating" : "by_brand_price";
       const result = await ctx.db
         .query("products")
@@ -287,6 +309,10 @@ export const list = query({
       const result = await ctx.db.query("products").paginate(paginationOpts);
       return { ...result, totalCount };
     }
+    if (sort === "newest") {
+      const result = await ctx.db.query("products").order("desc").paginate(paginationOpts);
+      return { ...result, totalCount };
+    }
     const indexName = sort === "rating" ? "by_rating" : "by_price";
     const result = await ctx.db
       .query("products")
@@ -299,12 +325,13 @@ export const list = query({
 
 function paginateInMemory(
   all: Doc<"products">[],
-  sort: "price-asc" | "price-desc" | "rating",
+  sort: "price-asc" | "price-desc" | "rating" | "newest",
   paginationOpts: { numItems: number; cursor: string | null }
 ) {
   const sorted = [...all].sort((a, b) => {
     if (sort === "price-asc") return a.price - b.price;
     if (sort === "price-desc") return b.price - a.price;
+    if (sort === "newest") return b._creationTime - a._creationTime;
     return b.rating - a.rating;
   });
   const start = paginationOpts.cursor ? parseInt(paginationOpts.cursor, 10) : 0;
@@ -334,7 +361,7 @@ export const getBestSellers = query({
 export const getNewArrivals = query({
   args: { limit: v.number() },
   handler: async (ctx, { limit }) => {
-    return await ctx.db.query("products").order("asc").take(limit);
+    return await ctx.db.query("products").order("desc").take(limit);
   },
 });
 
@@ -370,14 +397,23 @@ export const getModels = query({
       .withIndex("by_brand", (q) => q.eq("brand", brand))
       .collect();
 
-    const modelsSet = new Set<string>();
+    // Normalize before dedup so "Galaxy S24" / "S24" and case-only variants
+    // like "Redmi Go" / "Redmi GO" collapse to a single entry.
+    const brandRegex = new RegExp(`^${brand}\\s+`, "i");
+    const modelsByKey = new Map<string, string>();
     for (const p of products) {
-      if (p.model && p.model !== "Универсален" && p.model.trim()) {
-        modelsSet.add(p.model.trim());
-      }
+      if (!p.model || p.model === "Универсален" || !p.model.trim()) continue;
+      let cleaned = p.model
+        .trim()
+        .replace(brandRegex, "")
+        .replace(/\bgalaxy\b\s*/gi, "");
+      cleaned = cleaned.replace(/\s+/g, " ").trim();
+      if (!cleaned) continue;
+      const key = cleaned.toLowerCase();
+      if (!modelsByKey.has(key)) modelsByKey.set(key, cleaned);
     }
 
-    return Array.from(modelsSet).sort((a, b) => 
+    return Array.from(modelsByKey.values()).sort((a, b) =>
       b.localeCompare(a, undefined, { numeric: true, sensitivity: "base" })
     );
   },

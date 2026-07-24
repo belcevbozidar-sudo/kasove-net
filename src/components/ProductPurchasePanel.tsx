@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useCart } from "@/lib/cart-context";
-import { formatPrice, getBrand } from "@/lib/data";
+import { formatPrice } from "@/lib/data";
+import { formatModelDisplay } from "@/lib/format-model";
 import type { Product } from "@/lib/types";
 import StarRating from "./StarRating";
 import { CheckIcon, EyeIcon, MinusIcon, PlusIcon, ShieldIcon, TruckIcon, LockIcon } from "./Icons";
@@ -20,7 +21,6 @@ export default function ProductPurchasePanel({
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
 
-  const brand = getBrand(product.brand);
   const discountPct = product.oldPrice ? Math.round(100 - (product.price / product.oldPrice) * 100) : null;
 
   function handleAddToCart() {
@@ -40,7 +40,7 @@ export default function ProductPurchasePanel({
     <div className="flex flex-col gap-5">
       <div>
         <span className="text-xs uppercase tracking-wide text-text-muted">
-          {brand?.name} · {product.model}
+          {formatModelDisplay(product.brand, product.model)}
         </span>
         <h1 className="mt-1 font-heading text-2xl sm:text-3xl font-extrabold leading-tight">{product.name}</h1>
         <div className="mt-2 flex items-center gap-3">
