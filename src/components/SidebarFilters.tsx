@@ -128,7 +128,7 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
           Тип продукт
         </span>
         <div className="flex flex-col gap-2">
-          {activeBrand === "diecast-cars" ? (
+          {activeCategory === "toys" || activeBrand === "diecast-cars" ? (
             <>
               <button
                 onClick={() => updateParam("scale", "all")}
@@ -144,9 +144,6 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
                 { slug: "1-18", name: "Мащаб 1:18" },
                 { slug: "1-24", name: "Мащаб 1:24" },
                 { slug: "1-32", name: "Мащаб 1:32" },
-                { slug: "1-36", name: "Мащаб 1:36" },
-                { slug: "1-43", name: "Мащаб 1:43" },
-                { slug: "1-64", name: "Мащаб 1:64" },
               ].map((s) => (
                 <button
                   key={s.slug}

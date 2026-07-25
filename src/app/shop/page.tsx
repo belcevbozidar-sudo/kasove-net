@@ -3,7 +3,7 @@ import Link from "next/link";
 import SidebarFilters from "@/components/SidebarFilters";
 import ProductCard from "@/components/ProductCard";
 import BrandModelSelector from "@/components/BrandModelSelector";
-import { getBrand, getCategory, categories, brands } from "@/lib/data";
+import { getBrand, getCategory, categories, brands, NON_PHONE_CATEGORIES } from "@/lib/data";
 import { formatModelDisplay } from "@/lib/format-model";
 import { filterProducts } from "@/lib/products-server";
 import { decodeCursor, decodeHistory, nextLinkParams, prevLinkParams } from "@/lib/pagination";
@@ -53,8 +53,9 @@ export default async function ShopPage({
   const category = sp.category ? getCategory(sp.category) : undefined;
 
   // Wizard logic:
-  // Step 1: If category selected, but brand is missing
-  const showBrandSelectionStep = sp.category && !sp.brand;
+  // Step 1: If category selected, but brand is missing. Skipped for categories
+  // that aren't phone accessories (toys/diecast) — those have no brand to pick.
+  const showBrandSelectionStep = sp.category && !sp.brand && !NON_PHONE_CATEGORIES.has(sp.category);
 
   // Step 2: If brand is selected, but model is missing (excluding non-phone collections)
   const showModelSelectionStep = sp.brand && !sp.model && sp.brand !== "other" && sp.brand !== "diecast-cars";

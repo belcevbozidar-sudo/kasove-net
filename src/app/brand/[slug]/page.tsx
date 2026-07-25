@@ -20,6 +20,11 @@ export default async function BrandPage({
   searchParams: Promise<any>;
 }) {
   const { slug } = await params;
+
+  // "diecast-cars" was never a real brand — those products live in the toys
+  // category. Keep old links/bookmarks working instead of 404-ing.
+  if (slug === "diecast-cars") redirect("/shop?category=toys");
+
   const brand = getBrand(slug);
   if (!brand) notFound();
 

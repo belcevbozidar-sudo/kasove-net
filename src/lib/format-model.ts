@@ -4,6 +4,11 @@ import { getBrand } from "./data";
 // sense (they aren't phone-model brands, or the "model" is a generic label).
 const SKIP_PREFIX_BRANDS = new Set(["universal", "other", "diecast-cars"]);
 
+// Generic, non-model labels. Products carrying these (toys, cables, chargers)
+// often have an arbitrary brand attached in the source data, so prefixing it
+// would print nonsense like "Motorola Универсален".
+const GENERIC_MODELS = new Set(["универсален", "универсална", "универсално"]);
+
 /**
  * Formats a raw, scraped `model` string for display: strips a redundant
  * leading brand-slug prefix and any "Galaxy" occurrence, then re-prefixes
@@ -20,6 +25,7 @@ export function formatModelDisplay(brandSlug: string, model: string): string {
   if (!cleaned) cleaned = raw;
 
   if (SKIP_PREFIX_BRANDS.has(brandSlug)) return cleaned;
+  if (GENERIC_MODELS.has(cleaned.toLowerCase())) return cleaned;
 
   const brandName = getBrand(brandSlug)?.name;
   if (!brandName) return cleaned;

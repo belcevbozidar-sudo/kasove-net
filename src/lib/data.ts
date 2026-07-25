@@ -28,8 +28,7 @@ export const allBrands: Brand[] = [
   { slug: "acer", name: "Acer", tagline: "Acer аксесоари" },
   { slug: "meizu", name: "Meizu", tagline: "Meizu аксесоари" },
   { slug: "universal", name: "Универсални", tagline: "Аксесоари за всички телефони" },
-  { slug: "other", name: "Други", tagline: "Аксесоари за други марки" },
-  { slug: "diecast-cars", name: "Метални колички", tagline: "Колекционерски метални колички" }
+  { slug: "other", name: "Други", tagline: "Аксесоари за други марки" }
 ];
 
 export const brands: Brand[] = [
@@ -39,8 +38,7 @@ export const brands: Brand[] = [
   { slug: "honor", name: "Honor", tagline: "Honor аксесоари" },
   { slug: "motorola", name: "Motorola", tagline: "Moto аксесоари" },
   { slug: "huawei", name: "Huawei", tagline: "Huawei аксесоари" },
-  { slug: "other", name: "Други", tagline: "Аксесоари за други марки" },
-  { slug: "diecast-cars", name: "Метални колички", tagline: "Колекционерски метални колички" }
+  { slug: "other", name: "Други", tagline: "Аксесоари за други марки" }
 ];
 
 
@@ -52,7 +50,12 @@ export const categories: Category[] = [
   { slug: "chargers-220v", name: "Оригинални зарядни 220V", shortName: "Зарядни 220V", icon: "bolt" },
   { slug: "usb-cables", name: "USB кабели", shortName: "Кабели", icon: "cable" },
   { slug: "car-stands", name: "Стойки за кола", shortName: "Стойки кола", icon: "stand" },
+  { slug: "toys", name: "Метални колички и играчки", shortName: "Колички", icon: "case" },
 ];
+
+// Categories that aren't phone accessories: the shop's brand/model wizard must
+// be skipped for these, since their products aren't tied to a phone model.
+export const NON_PHONE_CATEGORIES = new Set<string>(["toys"]);
 
 export const FREE_SHIPPING_THRESHOLD = 45.50; // 89 BGN (formatted to EUR/BGN split)
 export const DEFAULT_SHIPPING_FEE = 3.55; // 6.95 BGN (formatted to EUR/BGN split)

@@ -27,7 +27,13 @@ export const categoryMenuData: MenuCategory[] = [
   {
     name: "МЕТАЛНИ КОЛИЧКИ",
     slug: "diecast-cars",
-    href: "/shop?brand=diecast-cars",
+    href: "/shop?category=toys",
+    subcategories: [
+      { name: "Всички колички", href: "/shop?category=toys" },
+      { name: "Мащаб 1:18", href: "/shop?category=toys&scale=1-18" },
+      { name: "Мащаб 1:24", href: "/shop?category=toys&scale=1-24" },
+      { name: "Мащаб 1:32", href: "/shop?category=toys&scale=1-32" },
+    ],
   },
   {
     name: "GSM АКСЕСОАРИ",
@@ -207,10 +213,10 @@ export const categoryMenuData: MenuCategory[] = [
   {
     name: "ДЕТСКИ ИГРАЧКИ",
     slug: "toys",
-    href: "/shop",
+    href: "/shop?category=toys",
     subcategories: [
-      { name: "Занимателни играчки", href: "/shop" },
-      { name: "Детски колички и писти", href: "/shop" },
+      { name: "Всички играчки", href: "/shop?category=toys" },
+      { name: "Метални колички", href: "/shop?category=toys" },
     ],
   },
   {

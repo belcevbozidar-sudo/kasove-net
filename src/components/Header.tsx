@@ -359,7 +359,7 @@ export default function Header() {
                 onMouseLeave={() => setHoveredMenu(null)}
               >
                 <Link
-                  href="/shop?brand=diecast-cars"
+                  href="/shop?category=toys"
                   onClick={() => setHoveredMenu(null)}
                   className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                 >
@@ -376,10 +376,10 @@ export default function Header() {
                     </p>
                     <div className="flex flex-col gap-1.5 pt-1">
                       {[
-                        { label: "Всички колички", href: "/shop?brand=diecast-cars" },
-                        { label: "Мащаб 1:18", href: "/shop?brand=diecast-cars&scale=1:18" },
-                        { label: "Мащаб 1:24", href: "/shop?brand=diecast-cars&scale=1:24" },
-                        { label: "Мащаб 1:32", href: "/shop?brand=diecast-cars&scale=1:32" },
+                        { label: "Всички колички", href: "/shop?category=toys" },
+                        { label: "Мащаб 1:18", href: "/shop?category=toys&scale=1-18" },
+                        { label: "Мащаб 1:24", href: "/shop?category=toys&scale=1-24" },
+                        { label: "Мащаб 1:32", href: "/shop?category=toys&scale=1-32" },
                       ].map((sc) => (
                         <Link
                           key={sc.label}
@@ -502,7 +502,7 @@ export default function Header() {
               </li>
               <li>
                 <Link
-                  href="/shop?brand=diecast-cars"
+                  href="/shop?category=toys"
                   onClick={() => setMobileOpen(false)}
                   className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
                 >
