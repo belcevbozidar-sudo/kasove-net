@@ -285,7 +285,7 @@ export default function Header() {
                                   onClick={() => setHoveredMenu(null)}
                                   className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                                 >
-                                  • {m}
+                                  • {formatModelDisplay(b.slug, m)}
                                 </Link>
                               ))}
                             </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatModelDisplay } from "@/lib/format-model";
 
 interface Props {
   brandSlug: string;
@@ -42,7 +43,7 @@ export default function BrandModelSelector({ brandSlug, brandName, models, categ
             onClick={() => handleSelectModel(m)}
             className="text-left text-[13px] font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
           >
-            • {m}
+            • {formatModelDisplay(brandSlug, m)}
           </button>
         ))}
       </div>

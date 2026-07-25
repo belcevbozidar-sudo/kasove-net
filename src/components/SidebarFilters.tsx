@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { categories, brands, formatPrice } from "@/lib/data";
+import { formatModelDisplay } from "@/lib/format-model";
 
 interface SidebarFiltersProps {
   availableModels: string[];
@@ -205,7 +206,7 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
             <option value="">Всички модели</option>
             {availableModels.map((m) => (
               <option key={m} value={m}>
-                {m}
+                {formatModelDisplay(activeBrand, m)}
               </option>
             ))}
           </select>

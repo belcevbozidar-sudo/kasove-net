@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { categories, brands } from "@/lib/data";
+import { formatModelDisplay } from "@/lib/format-model";
 import brandModelsData from "@/lib/models.json";
 
 export default function CategoryLinks() {
@@ -166,7 +167,7 @@ export default function CategoryLinks() {
                   <option value="">-- Изберете модел --</option>
                   {availableModels.map((m) => (
                     <option key={m} value={m}>
-                      {m}
+                      {formatModelDisplay(selectedBrand, m)}
                     </option>
                   ))}
                 </select>
