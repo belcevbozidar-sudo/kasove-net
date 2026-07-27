@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { CheckIcon } from "@/components/Icons";
 
 export default function ContactPage() {
+  const submitContactMessage = useMutation(api.contact.submitContactMessage);
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   return (
     <div className="mx-auto max-w-5xl container-p py-14">
@@ -43,25 +48,45 @@ export default function ContactPage() {
             </div>
           ) : (
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                setSent(true);
+                setSubmitting(true);
+                setError("");
+                const data = new FormData(e.currentTarget);
+                try {
+                  await submitContactMessage({
+                    name: String(data.get("name") ?? "").trim(),
+                    email: String(data.get("email") ?? "").trim(),
+                    subject: String(data.get("subject") ?? "").trim() || undefined,
+                    message: String(data.get("message") ?? "").trim(),
+                  });
+                  setSent(true);
+                } catch {
+                  setError("Възникна грешка при изпращането. Моля, опитай отново.");
+                } finally {
+                  setSubmitting(false);
+                }
               }}
               className="space-y-4 rounded-2xl border border-border-c bg-surface p-6"
             >
               <div className="grid gap-4 sm:grid-cols-2">
-                <input required placeholder="Име" className="rounded-xl border border-border-c bg-surface-2 px-4 py-3 text-sm outline-none focus:border-accent" />
-                <input required type="email" placeholder="Имейл" className="rounded-xl border border-border-c bg-surface-2 px-4 py-3 text-sm outline-none focus:border-accent" />
+                <input name="name" required placeholder="Име" className="rounded-xl border border-border-c bg-surface-2 px-4 py-3 text-sm outline-none focus:border-accent" />
+                <input name="email" required type="email" placeholder="Имейл" className="rounded-xl border border-border-c bg-surface-2 px-4 py-3 text-sm outline-none focus:border-accent" />
               </div>
-              <input placeholder="Тема" className="w-full rounded-xl border border-border-c bg-surface-2 px-4 py-3 text-sm outline-none focus:border-accent" />
+              <input name="subject" placeholder="Тема" className="w-full rounded-xl border border-border-c bg-surface-2 px-4 py-3 text-sm outline-none focus:border-accent" />
               <textarea
+                name="message"
                 required
                 rows={5}
                 placeholder="Съобщение"
                 className="w-full rounded-xl border border-border-c bg-surface-2 px-4 py-3 text-sm outline-none focus:border-accent"
               />
-              <button className="w-full rounded-full gradient-brand py-3.5 text-sm font-semibold text-white transition-transform active:scale-[0.98] sm:w-auto sm:px-8">
-                Изпрати съобщение
+              {error && <p className="text-xs text-sale">{error}</p>}
+              <button
+                disabled={submitting}
+                className="w-full rounded-full gradient-brand py-3.5 text-sm font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto sm:px-8"
+              >
+                {submitting ? "Изпращане..." : "Изпрати съобщение"}
               </button>
             </form>
           )}

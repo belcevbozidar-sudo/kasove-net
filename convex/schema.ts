@@ -63,6 +63,14 @@ export default defineSchema({
     lockoutUntil: v.optional(v.number()),
   }).index("by_ip", ["ip"]),
 
+  contactMessages: defineTable({
+    name: v.string(),
+    email: v.string(),
+    subject: v.optional(v.string()),
+    message: v.string(),
+    createdAt: v.number(),
+  }),
+
   slides: defineTable({
     image: v.string(),
     eyebrow: v.string(),

@@ -8,12 +8,26 @@ import { fetchQuery, fetchMutation } from "convex/nextjs";
 import { api } from "../../../convex/_generated/api";
 
 const ALGORITHM = "aes-256-cbc";
-const SECRET_KEY = crypto.scryptSync(process.env.ADMIN_PASSWORD || "default_secure_secret_key_1234567890", "salt", 32);
 const IV_LENGTH = 16;
+
+// No hardcoded fallback: this repo is public, so a literal default password
+// baked into source would be visible to anyone. Admin login simply doesn't
+// work until ADMIN_PASSWORD is configured as a real environment variable.
+function getAdminPassword(): string {
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) {
+    throw new Error("ADMIN_PASSWORD environment variable is not configured.");
+  }
+  return password;
+}
+
+function getSecretKey(): Buffer {
+  return crypto.scryptSync(getAdminPassword(), "salt", 32);
+}
 
 function encryptSession(data: string): string {
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, iv);
+  const cipher = crypto.createCipheriv(ALGORITHM, getSecretKey(), iv);
   let encrypted = cipher.update(data, "utf8", "hex");
   encrypted += cipher.final("hex");
   return iv.toString("hex") + ":" + encrypted;
@@ -25,7 +39,7 @@ function decryptSession(token: string): string | null {
     if (parts.length !== 2) return null;
     const iv = Buffer.from(parts[0], "hex");
     const encryptedText = parts[1];
-    const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, iv);
+    const decipher = crypto.createDecipheriv(ALGORITHM, getSecretKey(), iv);
     let decrypted = decipher.update(encryptedText, "hex", "utf8");
     decrypted += decipher.final("utf8");
     return decrypted;
@@ -75,7 +89,13 @@ export async function adminLogin(password: string, rememberMe: boolean) {
     };
   }
 
-  const adminPassword = process.env.ADMIN_PASSWORD || "Kp7$mZ#9qL_v2xT";
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword) {
+    return {
+      success: false,
+      error: "Административният панел не е конфигуриран — липсва ADMIN_PASSWORD.",
+    };
+  }
   if (password === adminPassword) {
     // Reset login failures on success
     await fetchMutation(api.products.resetLoginAttempts, { ip });
