@@ -22,6 +22,7 @@ export default defineSchema({
     bundleWith: v.optional(v.string()),
     bundleDiscountPct: v.optional(v.number()),
     colorName: v.optional(v.string()),
+    inStock: v.optional(v.boolean()),
   })
     .index("by_slug", ["slug"])
     .index("by_sourceId", ["sourceId"])
@@ -71,5 +72,38 @@ export default defineSchema({
     ctaHref: v.string(),
     order: v.number(),
   }).index("by_order", ["order"]),
+
+  orders: defineTable({
+    seq: v.number(),
+    orderNumber: v.string(),
+    type: v.union(v.literal("standard"), v.literal("quick")),
+    status: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+    phone: v.string(),
+    email: v.optional(v.string()),
+    deliveryMethod: v.optional(v.string()),
+    city: v.optional(v.string()),
+    addressOrOffice: v.optional(v.string()),
+    note: v.optional(v.string()),
+    paymentMethod: v.optional(v.string()),
+    items: v.array(
+      v.object({
+        productId: v.string(),
+        name: v.string(),
+        price: v.number(),
+        quantity: v.number(),
+        image: v.string(),
+        bundleProductId: v.optional(v.string()),
+      })
+    ),
+    subtotal: v.number(),
+    bundleSavings: v.optional(v.number()),
+    shipping: v.number(),
+    total: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_seq", ["seq"])
+    .index("by_status", ["status"]),
 });
 

@@ -94,6 +94,11 @@ function cleanModelName(model, brand) {
     }
   }
 
+  // 8b. A "4G"/"5G" connectivity suffix is not a distinct model — a phone
+  // case fits the same shell regardless of modem. Strip it wherever it
+  // appears so "S24 Ultra" and "S24 Ultra 5G" collapse into one entry.
+  cleaned = cleaned.replace(/\b[45]g\b/gi, "").replace(/\s+/g, " ").trim();
+
   // 9. Remove brand prefix for cleaner look
   const brandRegex = new RegExp(`^${brand}\\s+`, "i");
   cleaned = cleaned.replace(brandRegex, "");
@@ -307,7 +312,10 @@ function getSamsungWeight(name) {
   let hasSeries = false;
   let num = 0;
   
-  if (lowercase.includes("s24") || lowercase.includes("s23") || lowercase.includes("s22") || lowercase.includes("s21") || lowercase.includes("s20") || /\bs[1-9]\b/.test(lowercase) || /\bs10\b/.test(lowercase) || /\bs[1-9]0\b/.test(lowercase)) {
+  if (/\bs\d{1,2}\b/.test(lowercase)) {
+    // Any "S" + 1-2 digit flagship number (S8...S26...future S-numbers) —
+    // a generic pattern instead of a hardcoded list, so new releases don't
+    // silently sink to the bottom of the sort like S25/S26 used to.
     score += 400000;
     hasSeries = true;
     const sMatch = lowercase.match(/\bs\s*([0-9]+)/) || lowercase.match(/s([0-9]+)/);

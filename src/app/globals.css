@@ -36,10 +36,6 @@
   border-color: var(--border-c);
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   background: var(--bg);
   color: var(--text);

@@ -5,10 +5,23 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice, FREE_SHIPPING_THRESHOLD } from "@/lib/data";
+import { groupCartLines } from "@/lib/cart-grouping";
 import { CloseIcon, MinusIcon, PlusIcon, TrashIcon } from "./Icons";
 
 export default function CartDrawer() {
-  const { lines, isDrawerOpen, closeDrawer, setQuantity, removeItem, subtotal, bundleSavings, itemCount } = useCart();
+  const {
+    lines,
+    isDrawerOpen,
+    closeDrawer,
+    setQuantity,
+    setBundleQuantity,
+    removeItem,
+    removeBundle,
+    subtotal,
+    bundleSavings,
+    itemCount,
+  } = useCart();
+  const entries = groupCartLines(lines);
 
   useEffect(() => {
     if (isDrawerOpen) {
@@ -64,9 +77,70 @@ export default function CartDrawer() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-              {lines.map((line) => {
+              {entries.map((entry) => {
+                if (entry.type === "bundle") {
+                  const { caseLine, protectorLine } = entry;
+                  const qty = caseLine.quantity;
+                  const totalPrice = (caseLine.price + protectorLine.price) * qty;
+                  return (
+                    <div
+                      key={`bundle-${caseLine.productId}-${protectorLine.productId}`}
+                      className="rounded-2xl border border-accent/30 bg-accent/5 p-3"
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="rounded-full gradient-brand px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                          Бъндел -{protectorLine.bundleDiscountPct}%
+                        </span>
+                        <button
+                          onClick={() => removeBundle(caseLine.productId, protectorLine.productId)}
+                          aria-label="Премахни бъндела"
+                          className="text-text-muted hover:text-sale"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex shrink-0 items-center gap-1">
+                          <div className="relative h-16 w-16 overflow-hidden rounded-xl border border-border-c bg-surface-2">
+                            <Image src={caseLine.image} alt={caseLine.name} fill sizes="64px" className="object-cover" />
+                          </div>
+                          <PlusIcon className="w-3 h-3 shrink-0 text-text-muted" />
+                          <div className="relative h-16 w-16 overflow-hidden rounded-xl border border-border-c bg-surface-2">
+                            <Image src={protectorLine.image} alt={protectorLine.name} fill sizes="64px" className="object-cover" />
+                          </div>
+                        </div>
+                        <div className="flex flex-1 flex-col min-w-0">
+                          <p className="text-sm font-semibold leading-snug line-clamp-2">{caseLine.name}</p>
+                          <p className="text-xs text-text-muted line-clamp-1">+ {protectorLine.name}</p>
+                          <div className="mt-auto flex items-center justify-between pt-2">
+                            <div className="flex items-center gap-2 rounded-full border border-border-c px-2 py-1">
+                              <button
+                                onClick={() => setBundleQuantity(caseLine.productId, protectorLine.productId, qty - 1)}
+                                className="text-text-muted hover:text-text"
+                                aria-label="Намали количеството"
+                              >
+                                <MinusIcon className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="w-4 text-center text-xs font-semibold">{qty}</span>
+                              <button
+                                onClick={() => setBundleQuantity(caseLine.productId, protectorLine.productId, qty + 1)}
+                                className="text-text-muted hover:text-text"
+                                aria-label="Увеличи количеството"
+                              >
+                                <PlusIcon className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <span className="text-sm font-bold">{formatPrice(totalPrice)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                const line = entry.line;
                 return (
-                  <div key={`${line.productId}-${line.bundleProductId ?? "solo"}`} className="flex gap-3">
+                  <div key={line.productId} className="flex gap-3">
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-surface-2">
                       <Image src={line.image} alt={line.name} fill sizes="80px" className="object-cover" />
                     </div>
@@ -75,11 +149,6 @@ export default function CartDrawer() {
                         <div>
                           <p className="text-sm font-semibold leading-snug">{line.name}</p>
                           <p className="text-xs text-text-muted">{line.model}</p>
-                          {line.isBundleDiscounted && (
-                            <span className="mt-1 inline-block rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent-lime">
-                              Бъндел отстъпка
-                            </span>
-                          )}
                         </div>
                         <button
                           onClick={() => removeItem(line.productId)}

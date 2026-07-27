@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice, FREE_SHIPPING_THRESHOLD, DEFAULT_SHIPPING_FEE } from "@/lib/data";
 import { MinusIcon, PlusIcon, TrashIcon, CartIcon } from "@/components/Icons";
+import { groupCartLines } from "@/lib/cart-grouping";
 import ProductRail from "@/components/ProductRail";
 import { useState, useEffect } from "react";
 
 export default function CartPage() {
-  const { lines, setQuantity, removeItem, subtotal, bundleSavings, itemCount } = useCart();
+  const { lines, setQuantity, setBundleQuantity, removeItem, removeBundle, subtotal, bundleSavings, itemCount } = useCart();
+  const entries = groupCartLines(lines);
   const [promo, setPromo] = useState("");
   const [promoMsg, setPromoMsg] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -48,9 +50,74 @@ export default function CartPage() {
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          {lines.map((line) => {
+          {entries.map((entry) => {
+            if (entry.type === "bundle") {
+              const { caseLine, protectorLine } = entry;
+              const qty = caseLine.quantity;
+              const totalOriginal = (caseLine.originalPrice + protectorLine.originalPrice) * qty;
+              const totalPrice = (caseLine.price + protectorLine.price) * qty;
+              return (
+                <div
+                  key={`bundle-${caseLine.productId}-${protectorLine.productId}`}
+                  className="flex gap-4 rounded-2xl border border-accent/30 bg-accent/5 p-4"
+                >
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Link href={`/product/${caseLine.slug}`} className="relative h-24 w-24 overflow-hidden rounded-xl bg-surface-2">
+                      <Image src={caseLine.image} alt={caseLine.name} fill sizes="96px" className="object-cover" />
+                    </Link>
+                    <PlusIcon className="w-4 h-4 shrink-0 text-text-muted" />
+                    <Link href={`/product/${protectorLine.slug}`} className="relative h-24 w-24 overflow-hidden rounded-xl bg-surface-2">
+                      <Image src={protectorLine.image} alt={protectorLine.name} fill sizes="96px" className="object-cover" />
+                    </Link>
+                  </div>
+                  <div className="flex flex-1 flex-col min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="mb-1 inline-block rounded-full gradient-brand px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                          Бъндел -{protectorLine.bundleDiscountPct}%
+                        </span>
+                        <p className="font-heading font-semibold leading-snug">{caseLine.name}</p>
+                        <p className="text-xs text-text-muted mt-0.5">+ {protectorLine.name}</p>
+                      </div>
+                      <button
+                        onClick={() => removeBundle(caseLine.productId, protectorLine.productId)}
+                        aria-label="Премахни бъндела"
+                        className="shrink-0 text-text-muted hover:text-sale"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div className="mt-auto flex items-center justify-between pt-3">
+                      <div className="flex items-center gap-3 rounded-full border border-border-c px-3 py-1.5">
+                        <button
+                          onClick={() => setBundleQuantity(caseLine.productId, protectorLine.productId, qty - 1)}
+                          aria-label="Намали"
+                          className="text-text-muted hover:text-text"
+                        >
+                          <MinusIcon className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="w-5 text-center text-sm font-semibold">{qty}</span>
+                        <button
+                          onClick={() => setBundleQuantity(caseLine.productId, protectorLine.productId, qty + 1)}
+                          aria-label="Увеличи"
+                          className="text-text-muted hover:text-text"
+                        >
+                          <PlusIcon className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-xs text-text-muted line-through">{formatPrice(totalOriginal)}</span>
+                        <span className="font-heading font-bold">{formatPrice(totalPrice)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            const line = entry.line;
             return (
-              <div key={`${line.productId}-${line.bundleProductId ?? "solo"}`} className="flex gap-4 rounded-2xl border border-border-c bg-surface p-4">
+              <div key={line.productId} className="flex gap-4 rounded-2xl border border-border-c bg-surface p-4">
                 <Link href={`/product/${line.slug}`} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-surface-2">
                   <Image src={line.image} alt={line.name} fill sizes="96px" className="object-cover" />
                 </Link>
@@ -61,11 +128,6 @@ export default function CartPage() {
                         {line.name}
                       </Link>
                       <p className="text-xs text-text-muted mt-0.5">{line.model}</p>
-                      {line.isBundleDiscounted && (
-                        <span className="mt-1.5 inline-block rounded-full bg-accent/15 px-2.5 py-0.5 text-[11px] font-semibold text-accent-lime">
-                          Бъндел отстъпка -{line.bundleDiscountPct}%
-                        </span>
-                      )}
                     </div>
                     <button onClick={() => removeItem(line.productId)} aria-label="Премахни" className="text-text-muted hover:text-sale">
                       <TrashIcon className="w-5 h-5" />
@@ -82,9 +144,6 @@ export default function CartPage() {
                       </button>
                     </div>
                     <div className="text-right">
-                      {line.isBundleDiscounted && (
-                        <span className="block text-xs text-text-muted line-through">{formatPrice(line.originalPrice * line.quantity)}</span>
-                      )}
                       <span className="font-heading font-bold">{formatPrice(line.price * line.quantity)}</span>
                     </div>
                   </div>

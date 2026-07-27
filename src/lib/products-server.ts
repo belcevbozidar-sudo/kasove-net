@@ -166,18 +166,36 @@ export async function getBundleProducts(product: Product): Promise<Product[]> {
         return modelWords.every(word => nameLower.includes(word) || modelLower.includes(word));
       });
 
-      return compatible.slice(0, 10);
+      // Defense in depth: two protector listings that differ only by a
+      // "5G"/"4G" token (or trailing punctuation) are the same physical
+      // item — only offer one of them as a bundle option.
+      const seen = new Set<string>();
+      const deduped: Product[] = [];
+      for (const p of compatible) {
+        const key = p.name
+          .toLowerCase()
+          .replace(/\b[45]g\b/gi, " ")
+          .replace(/[^\p{L}\p{N}\s]/gu, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(p);
+      }
+
+      return deduped.slice(0, 10);
     }
   }
 
   return [];
 }
 
-export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
-  const docs = await fetchQuery(api.products.getRelated, {
+export async function getSimilarProducts(product: Product, limit = 8): Promise<Product[]> {
+  const docs = await fetchQuery(api.products.getSimilar, {
     sourceId: product.id,
     category: product.category,
     brand: product.brand,
+    model: product.model,
     limit,
   });
   return docs.map(toProduct);

@@ -156,7 +156,7 @@ export default function Header() {
             <div className="mx-auto flex max-w-7xl items-center justify-between container-p py-0 text-[13px] font-extrabold uppercase tracking-wide text-text relative">
               {/* Категории — full-site sitemap mega-menu (first item) */}
               <div className="group relative py-4">
-                <button className="flex items-center gap-1.5 text-text hover:text-accent transition-colors py-1 cursor-pointer">
+                <button className="flex items-center gap-1.5 uppercase text-text hover:text-accent transition-colors py-1 cursor-pointer">
                   <svg className="w-3.5 h-3.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>

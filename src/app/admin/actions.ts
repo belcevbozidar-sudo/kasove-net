@@ -153,6 +153,7 @@ export async function saveProduct(data: {
   gallery: string[];
   features: string[];
   badge?: string;
+  inStock?: boolean;
 }) {
   const hasSession = await checkAdminSession();
   if (!hasSession) throw new Error("Unauthorized");
@@ -176,6 +177,7 @@ export async function saveProduct(data: {
         gallery: data.gallery,
         features: data.features,
         badge: data.badge || undefined,
+        inStock: data.inStock,
       });
     } else {
       // Add
@@ -190,6 +192,7 @@ export async function saveProduct(data: {
         gallery: data.gallery,
         features: data.features,
         badge: data.badge || undefined,
+        inStock: data.inStock,
       });
     }
     return { success: true };

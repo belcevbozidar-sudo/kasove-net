@@ -27,8 +27,11 @@ export interface CartLine {
 interface CartContextValue {
   lines: CartLine[];
   addItem: (product: any, quantity?: number, bundleAnchorProduct?: any) => void;
+  addBundle: (caseProduct: any, protectorProduct: any, discountPct: number) => void;
   removeItem: (productId: string) => void;
+  removeBundle: (caseProductId: string, protectorProductId: string) => void;
   setQuantity: (productId: string, quantity: number) => void;
+  setBundleQuantity: (caseProductId: string, protectorProductId: string, quantity: number) => void;
   clearCart: () => void;
   itemCount: number;
   subtotal: number;
@@ -112,8 +115,62 @@ export function CartProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  // Adding a case+protector bundle always results in exactly one bundle
+  // pair in the cart at the bundle price — if the case already existed as
+  // a standalone line, it's replaced rather than doubled up.
+  const addBundle = useCallback(
+    (caseProduct: any, protectorProduct: any, discountPct: number) => {
+      setLines((prev) => {
+        const withoutOld = prev.filter(
+          (l) =>
+            l.productId !== caseProduct.id &&
+            !(l.productId === protectorProduct.id && l.bundleProductId === caseProduct.id)
+        );
+        const finalPrice = protectorProduct.price * (1 - discountPct / 100);
+        return [
+          ...withoutOld,
+          {
+            productId: caseProduct.id,
+            quantity: 1,
+            name: caseProduct.name,
+            price: caseProduct.price,
+            originalPrice: caseProduct.price,
+            image: caseProduct.image,
+            model: caseProduct.model,
+            slug: caseProduct.slug,
+          },
+          {
+            productId: protectorProduct.id,
+            quantity: 1,
+            bundleProductId: caseProduct.id,
+            name: protectorProduct.name,
+            price: finalPrice,
+            originalPrice: protectorProduct.price,
+            image: protectorProduct.image,
+            model: protectorProduct.model,
+            slug: protectorProduct.slug,
+            isBundleDiscounted: true,
+            bundleDiscountPct: discountPct,
+          },
+        ];
+      });
+      setIsDrawerOpen(true);
+    },
+    []
+  );
+
   const removeItem = useCallback((productId: string) => {
     setLines((prev) => prev.filter((l) => l.productId !== productId));
+  }, []);
+
+  const removeBundle = useCallback((caseProductId: string, protectorProductId: string) => {
+    setLines((prev) =>
+      prev.filter(
+        (l) =>
+          !(l.productId === caseProductId && !l.bundleProductId) &&
+          !(l.productId === protectorProductId && l.bundleProductId === caseProductId)
+      )
+    );
   }, []);
 
   const setQuantity = useCallback((productId: string, quantity: number) => {
@@ -123,6 +180,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
         .filter((l) => l.quantity > 0)
     );
   }, []);
+
+  const setBundleQuantity = useCallback(
+    (caseProductId: string, protectorProductId: string, quantity: number) => {
+      setLines((prev) =>
+        prev
+          .map((l) => {
+            if (l.productId === caseProductId && !l.bundleProductId) return { ...l, quantity };
+            if (l.productId === protectorProductId && l.bundleProductId === caseProductId) return { ...l, quantity };
+            return l;
+          })
+          .filter((l) => l.quantity > 0)
+      );
+    },
+    []
+  );
 
   const clearCart = useCallback(() => setLines([]), []);
 
@@ -146,8 +218,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const value: CartContextValue = {
     lines,
     addItem,
+    addBundle,
     removeItem,
+    removeBundle,
     setQuantity,
+    setBundleQuantity,
     clearCart,
     itemCount,
     subtotal,

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import StarRating from "./StarRating";
+import ProductCharacteristics from "./ProductCharacteristics";
 import type { Product } from "@/lib/types";
 
 const reviewSamples = [
@@ -15,7 +16,7 @@ export default function ProductTabs({ product }: { product: Product }) {
 
   const tabs = [
     { key: "description" as const, label: "Описание" },
-    { key: "specs" as const, label: "Спецификация" },
+    { key: "specs" as const, label: "Характеристики", mobileOnly: true },
     { key: "reviews" as const, label: `Отзиви (${product.reviewCount})` },
   ];
 
@@ -26,7 +27,7 @@ export default function ProductTabs({ product }: { product: Product }) {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`relative pb-3 text-sm font-semibold transition-colors ${
+            className={`relative pb-3 text-sm font-semibold transition-colors ${t.mobileOnly ? "lg:hidden" : ""} ${
               tab === t.key ? "text-text" : "text-text-muted hover:text-text"
             }`}
           >
@@ -39,15 +40,11 @@ export default function ProductTabs({ product }: { product: Product }) {
       <div className="py-6 max-w-2xl">
         {tab === "description" && <p className="text-sm leading-relaxed text-text-muted">{product.description}</p>}
 
+        {/* Same content as the desktop right-column panel — this tab is mobile-only (hidden lg:hidden above) */}
         {tab === "specs" && (
-          <ul className="space-y-3 text-sm">
-            {product.features.map((f) => (
-              <li key={f} className="flex items-start gap-2.5 text-text-muted">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-lime" />
-                {f}
-              </li>
-            ))}
-          </ul>
+          <div className="lg:hidden">
+            <ProductCharacteristics product={product} />
+          </div>
         )}
 
         {tab === "reviews" && (

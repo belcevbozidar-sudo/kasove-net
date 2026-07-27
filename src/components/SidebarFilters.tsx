@@ -170,7 +170,9 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
               >
                 <span>Всички аксесоари</span>
               </button>
-              {categories.map((c) => (
+              {categories
+                .filter((c) => !(activeModel && c.slug === "toys"))
+                .map((c) => (
                 <button
                   key={c.slug}
                   onClick={() => updateParam("category", c.slug)}

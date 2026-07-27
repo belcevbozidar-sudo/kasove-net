@@ -12,7 +12,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ initialProducts }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<"products" | "sliders">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "orders" | "sliders">("products");
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [search, setSearch] = useState("");
   const [filterBrand, setFilterBrand] = useState("all");
@@ -20,12 +20,16 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
 
   // Slide list from Convex
   const slides = useQuery(api.slides.list) || [];
-  
+
   // Slide Mutations
   const addSlideMutation = useMutation(api.slides.add);
   const updateSlideMutation = useMutation(api.slides.update);
   const deleteSlideMutation = useMutation(api.slides.deleteSlide);
   const seedSlidesMutation = useMutation(api.slides.seed);
+
+  // Orders
+  const orders = useQuery(api.orders.getOrders) || [];
+  const updateOrderStatusMutation = useMutation(api.orders.updateOrderStatus);
 
   // Product Form state
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -40,6 +44,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   const [formDescription, setFormDescription] = useState("");
   const [formBadge, setFormBadge] = useState("");
   const [formFeatures, setFormFeatures] = useState<string[]>([]);
+  const [formInStock, setFormInStock] = useState(true);
   
   // Gallery state
   const [selectedGallery, setSelectedGallery] = useState<string[]>([]);
@@ -77,6 +82,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     setFormDescription(product.description || "");
     setFormBadge(product.badge || "");
     setFormFeatures(product.features || []);
+    setFormInStock(product.inStock !== false);
     setSelectedGallery(product.gallery || (product.image ? [product.image] : []));
     
     setError("");
@@ -95,6 +101,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     setFormDescription("");
     setFormBadge("");
     setFormFeatures([]);
+    setFormInStock(true);
     setSelectedGallery([]);
     
     setError("");
@@ -139,6 +146,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
       gallery: selectedGallery,
       features: formFeatures,
       badge: formBadge || undefined,
+      inStock: formInStock,
     });
 
     setIsSaving(false);
@@ -304,14 +312,15 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {activeTab === "products" ? (
+            {activeTab === "products" && (
               <button
                 onClick={handleAddNew}
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-pink-600 text-white font-semibold text-sm hover:brightness-110 shadow-md active:scale-95 transition-all cursor-pointer"
               >
                 + Нов продукт
               </button>
-            ) : (
+            )}
+            {activeTab === "sliders" && (
               <button
                 onClick={handleAddNewSlide}
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-pink-600 text-white font-semibold text-sm hover:brightness-110 shadow-md active:scale-95 transition-all cursor-pointer"
@@ -339,6 +348,16 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
             }`}
           >
             Управление на Продукти
+          </button>
+          <button
+            onClick={() => setActiveTab("orders")}
+            className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              activeTab === "orders"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+            }`}
+          >
+            Поръчки{orders.length > 0 ? ` (${orders.length})` : ""}
           </button>
           <button
             onClick={() => setActiveTab("sliders")}
@@ -502,6 +521,76 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                 </div>
               </div>
             </main>
+          </div>
+        )}
+
+        {/* ORDERS TAB */}
+        {activeTab === "orders" && (
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="px-4 py-3">Номер</th>
+                    <th className="px-4 py-3">Тип</th>
+                    <th className="px-4 py-3">Клиент</th>
+                    <th className="px-4 py-3">Продукти</th>
+                    <th className="px-4 py-3">Сума</th>
+                    <th className="px-4 py-3">Статус</th>
+                    <th className="px-4 py-3">Дата</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {orders.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                        Все още няма постъпили поръчки.
+                      </td>
+                    </tr>
+                  ) : (
+                    orders.map((o: any) => (
+                      <tr key={o._id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 font-bold text-slate-900">{o.orderNumber}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                              o.type === "quick" ? "bg-amber-50 text-amber-700" : "bg-sky-50 text-sky-700"
+                            }`}
+                          >
+                            {o.type === "quick" ? "Бърза" : "Обикновена"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-slate-800">{o.firstName} {o.lastName}</p>
+                          <p className="text-xs text-slate-500">{o.phone}</p>
+                        </td>
+                        <td className="px-4 py-3 max-w-xs">
+                          <p className="text-xs text-slate-600 line-clamp-2">
+                            {o.items.map((i: any) => `${i.quantity}x ${i.name}`).join(", ")}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3 font-bold text-slate-900 whitespace-nowrap">{o.total.toFixed(2)} лв.</td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={o.status}
+                            onChange={(e) => updateOrderStatusMutation({ orderId: o._id, status: e.target.value })}
+                            className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-800"
+                          >
+                            <option value="нова">нова</option>
+                            <option value="обработена">обработена</option>
+                            <option value="изпратена">изпратена</option>
+                            <option value="отказана">отказана</option>
+                          </select>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-500">
+                          {new Date(o.createdAt).toLocaleString("bg-BG")}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -731,6 +820,20 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                       <option value="Хит">Хит</option>
                       <option value="Топ оферта">Топ оферта</option>
                     </select>
+                  </div>
+
+                  {/* In stock */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Наличност</label>
+                    <label className="flex items-center gap-2.5 cursor-pointer px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white">
+                      <input
+                        type="checkbox"
+                        checked={formInStock}
+                        onChange={(e) => setFormInStock(e.target.checked)}
+                        className="h-4.5 w-4.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500 focus:ring-2 cursor-pointer"
+                      />
+                      <span className="text-sm text-slate-800">{formInStock ? "Наличен" : "Неналичен (очаква се доставка)"}</span>
+                    </label>
                   </div>
 
                   {/* Price */}

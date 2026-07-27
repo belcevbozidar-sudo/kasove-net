@@ -7,7 +7,7 @@ import ProductRail from "@/components/ProductRail";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import { getBrand, getCategory } from "@/lib/data";
 import { formatModelDisplay } from "@/lib/format-model";
-import { getBundleProducts, getProductBySlug, getRelatedProducts } from "@/lib/products-server";
+import { getBundleProducts, getProductBySlug, getSimilarProducts } from "@/lib/products-server";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -26,10 +26,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const brand = getBrand(product.brand);
   const category = getCategory(product.category);
-  const [bundleProducts, related] = await Promise.all([
+  const [bundleProducts, similar] = await Promise.all([
     getBundleProducts(product),
-    getRelatedProducts(product),
+    getSimilarProducts(product, 8),
   ]);
+  const similarHref = `/shop?category=${encodeURIComponent(product.category)}&brand=${encodeURIComponent(product.brand)}&model=${encodeURIComponent(product.model)}`;
 
   return (
     <div className="mx-auto max-w-7xl container-p py-10 pb-28 sm:pb-10">
@@ -46,7 +47,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
       <ProductTabs product={product} />
 
-      <ProductRail eyebrow="Може да хареса" title="Свързани продукти" products={related} />
+      <ProductRail eyebrow="Може да хареса" title="Сходни продукти" products={similar} href={similarHref} />
       <RecentlyViewed currentSlug={product.slug} />
     </div>
   );

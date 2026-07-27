@@ -27,8 +27,10 @@ function getModelVariations(model: string, brand: string): string[] {
   let cleanModel = model.replace(brandRegex, "");
   
   cleanModel = cleanModel.replace(/^galaxy\s+/i, "");
-  cleanModel = cleanModel.trim();
-  
+  // A "4G"/"5G" connectivity suffix isn't a distinct model for case-fitting
+  // purposes — strip it so "S24 Ultra" and "S24 Ultra 5G" match each other.
+  cleanModel = cleanModel.replace(/\b[45]g\b/gi, "").replace(/\s+/g, " ").trim();
+
   variations.add(cleanModel);
   variations.add(`${brandCapitalized} ${cleanModel}`);
   variations.add(`${brandCapitalized} Galaxy ${cleanModel}`);
@@ -365,27 +367,21 @@ export const getNewArrivals = query({
   },
 });
 
-export const getRelated = query({
-  args: { sourceId: v.string(), category: v.string(), brand: v.string(), limit: v.number() },
-  handler: async (ctx, { sourceId, category, brand, limit }) => {
-    const byBrand = await ctx.db
+// "Similar products" — strictly the same brand + phone model + accessory
+// category as the current product (e.g. other cases for the same iPhone 15),
+// not a generic same-brand-or-category cross-sell. Returns fewer than
+// `limit` rather than padding with unrelated models.
+export const getSimilar = query({
+  args: { sourceId: v.string(), category: v.string(), brand: v.string(), model: v.string(), limit: v.number() },
+  handler: async (ctx, { sourceId, category, brand, model, limit }) => {
+    if (!model) return [];
+    const docs = await ctx.db
       .query("products")
-      .withIndex("by_brand", (q) => q.eq("brand", brand))
-      .take(limit + 1);
-    const byCategory = await ctx.db
-      .query("products")
-      .withIndex("by_category", (q) => q.eq("category", category))
-      .take(limit + 1);
-
-    const seen = new Set<string>();
-    const merged: Doc<"products">[] = [];
-    for (const p of [...byBrand, ...byCategory]) {
-      if (p.sourceId === sourceId || seen.has(p.sourceId)) continue;
-      seen.add(p.sourceId);
-      merged.push(p);
-      if (merged.length >= limit) break;
-    }
-    return merged;
+      .withIndex("by_brand_model", (q) => q.eq("brand", brand).eq("model", model))
+      .collect();
+    return docs
+      .filter((p) => p.sourceId !== sourceId && p.category === category)
+      .slice(0, limit);
   },
 });
 
@@ -406,7 +402,8 @@ export const getModels = query({
       let cleaned = p.model
         .trim()
         .replace(brandRegex, "")
-        .replace(/\bgalaxy\b\s*/gi, "");
+        .replace(/\bgalaxy\b\s*/gi, "")
+        .replace(/\b[45]g\b/gi, "");
       cleaned = cleaned.replace(/\s+/g, " ").trim();
       if (!cleaned) continue;
       const key = cleaned.toLowerCase();
@@ -665,6 +662,7 @@ export const adminAddProduct = mutation({
     gallery: v.array(v.string()),
     features: v.array(v.string()),
     badge: v.optional(v.string()),
+    inStock: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     let baseSlug = slugify(args.name);
@@ -700,6 +698,7 @@ export const adminAddProduct = mutation({
       description: args.description,
       features: args.features,
       badge: args.badge,
+      inStock: args.inStock ?? true,
     };
 
     const id = await ctx.db.insert("products", product);
@@ -721,6 +720,7 @@ export const adminUpdateProduct = mutation({
     gallery: v.array(v.string()),
     features: v.array(v.string()),
     badge: v.optional(v.string()),
+    inStock: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -763,12 +763,51 @@ export const adminUpdateProduct = mutation({
       description: args.description,
       features: args.features,
       badge: args.badge,
+      inStock: args.inStock ?? true,
     });
 
     if (oldCategory !== args.category || oldBrand !== args.brand) {
       await adjustFacetCount(ctx.db, oldCategory, oldBrand, -1);
       await adjustFacetCount(ctx.db, args.category, args.brand, 1);
     }
+  },
+});
+
+// One-off data-migration helper (used by scripts/normalize-model-5g.js) —
+// patches only the `model` field, so it can't touch slug/facets/price/etc.
+export const adminSetModel = mutation({
+  args: { sourceId: v.string(), model: v.string() },
+  handler: async (ctx, { sourceId, model }) => {
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+      .unique();
+    if (!existing) return false;
+    await ctx.db.patch(existing._id, { model });
+    return true;
+  },
+});
+
+// One-off data-migration helper (used by scripts/merge-5g-duplicates.js) —
+// patches only `name`/`bundleWith`, for renaming a surviving canonical
+// record and redirecting bundle references after a duplicate is deleted.
+export const adminMigratePatchNameBundle = mutation({
+  args: {
+    sourceId: v.string(),
+    name: v.optional(v.string()),
+    bundleWith: v.optional(v.string()),
+  },
+  handler: async (ctx, { sourceId, name, bundleWith }) => {
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+      .unique();
+    if (!existing) return false;
+    const patch: Record<string, unknown> = {};
+    if (name !== undefined) patch.name = name;
+    if (bundleWith !== undefined) patch.bundleWith = bundleWith;
+    await ctx.db.patch(existing._id, patch);
+    return true;
   },
 });
 
