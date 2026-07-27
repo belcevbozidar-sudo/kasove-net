@@ -879,6 +879,26 @@ export const adminSetSku = mutation({
   },
 });
 
+// One-off data-migration helper (used by scripts/fix-price-currency.js) —
+// the imported catalog stored the original site's BGN price directly in the
+// `price`/`oldPrice` fields, which the storefront treats as EUR and then
+// multiplies by the BGN peg for display — inflating every shown price by
+// ~95%. This patches just the two numeric fields to the corrected EUR value.
+export const adminFixPriceUnits = mutation({
+  args: { sourceId: v.string(), price: v.number(), oldPrice: v.optional(v.number()) },
+  handler: async (ctx, { sourceId, price, oldPrice }) => {
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+      .unique();
+    if (!existing) return false;
+    const patch: Record<string, unknown> = { price };
+    if (oldPrice !== undefined) patch.oldPrice = oldPrice;
+    await ctx.db.patch(existing._id, patch);
+    return true;
+  },
+});
+
 // Returns the next unused SKU (e.g. current highest "KP-100042" -> "KP-100043"),
 // so both the admin "new product" form and the backfill script agree on one
 // counter instead of guessing independently.

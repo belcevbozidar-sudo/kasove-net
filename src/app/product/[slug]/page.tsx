@@ -47,7 +47,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
       <ProductTabs product={product} />
 
-      <ProductRail eyebrow="Може да хареса" title="Сходни продукти" products={similar} href={similarHref} />
+      <ProductRail title="Сходни продукти" products={similar} href={similarHref} />
       <RecentlyViewed currentSlug={product.slug} />
     </div>
   );
