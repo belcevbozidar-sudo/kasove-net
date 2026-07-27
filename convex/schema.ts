@@ -23,6 +23,7 @@ export default defineSchema({
     bundleDiscountPct: v.optional(v.number()),
     colorName: v.optional(v.string()),
     inStock: v.optional(v.boolean()),
+    sku: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_sourceId", ["sourceId"])
@@ -38,6 +39,7 @@ export default defineSchema({
     .index("by_hasOldPrice", ["hasOldPrice"])
     .index("by_model", ["model"])
     .index("by_brand_model", ["brand", "model"])
+    .index("by_sku", ["sku"])
     .searchIndex("search_name", {
       searchField: "name",
       filterFields: ["category", "brand"],

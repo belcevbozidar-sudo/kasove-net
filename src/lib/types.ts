@@ -86,4 +86,5 @@ export interface Product {
   bundleDiscountPct?: number;
   colorName?: string;
   inStock?: boolean;
+  sku?: string;
 }

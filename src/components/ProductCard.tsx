@@ -54,6 +54,15 @@ export default function ProductCard({ product }: { product: Product }) {
           {product.name}
         </Link>
         <StarRating rating={product.rating} reviewCount={product.reviewCount} />
+        {product.sku && (
+          <p className="text-[10px] text-text-muted">
+            <span className={outOfStock ? "text-sale font-semibold" : "text-success font-semibold"}>
+              {outOfStock ? "Неналичен" : "В наличност"}
+            </span>
+            {" · Арт. № "}
+            {product.sku}
+          </p>
+        )}
         <div className="mt-auto flex items-end justify-between gap-2 pt-1">
           <div className="flex flex-col">
             {product.oldPrice && (

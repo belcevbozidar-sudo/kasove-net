@@ -31,6 +31,9 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   const orders = useQuery(api.orders.getOrders) || [];
   const updateOrderStatusMutation = useMutation(api.orders.updateOrderStatus);
 
+  // Suggested next article number for a brand-new product (still editable)
+  const nextSkuSuggestion = useQuery(api.products.getNextSku);
+
   // Product Form state
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -45,6 +48,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   const [formBadge, setFormBadge] = useState("");
   const [formFeatures, setFormFeatures] = useState<string[]>([]);
   const [formInStock, setFormInStock] = useState(true);
+  const [formSku, setFormSku] = useState("");
   
   // Gallery state
   const [selectedGallery, setSelectedGallery] = useState<string[]>([]);
@@ -83,6 +87,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     setFormBadge(product.badge || "");
     setFormFeatures(product.features || []);
     setFormInStock(product.inStock !== false);
+    setFormSku(product.sku || "");
     setSelectedGallery(product.gallery || (product.image ? [product.image] : []));
     
     setError("");
@@ -102,6 +107,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     setFormBadge("");
     setFormFeatures([]);
     setFormInStock(true);
+    setFormSku(nextSkuSuggestion || "");
     setSelectedGallery([]);
     
     setError("");
@@ -147,6 +153,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
       features: formFeatures,
       badge: formBadge || undefined,
       inStock: formInStock,
+      sku: formSku.trim() || undefined,
     });
 
     setIsSaving(false);
@@ -287,6 +294,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     const matchesSearch = !searchLower ||
       p.name.toLowerCase().includes(searchLower) ||
       (p.model && p.model.toLowerCase().includes(searchLower)) ||
+      (p.sku && p.sku.toLowerCase().includes(searchLower)) ||
       (bObj && bObj.name.toLowerCase().includes(searchLower)) ||
       (cObj && cObj.shortName.toLowerCase().includes(searchLower)) ||
       (cObj && cObj.name.toLowerCase().includes(searchLower)) ||
@@ -447,6 +455,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                     <thead>
                       <tr className="border-b border-slate-200 bg-slate-50/50">
                         <th className="p-4 font-bold text-slate-500">Снимка</th>
+                        <th className="p-4 font-bold text-slate-500">Арт. №</th>
                         <th className="p-4 font-bold text-slate-500">Име</th>
                         <th className="p-4 font-bold text-slate-500">Марка/Модел</th>
                         <th className="p-4 font-bold text-slate-500">Категория</th>
@@ -457,7 +466,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                     <tbody className="divide-y divide-slate-100">
                       {filteredProducts.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="p-8 text-center text-slate-400">
+                          <td colSpan={7} className="p-8 text-center text-slate-400">
                             Няма намерени продукти.
                           </td>
                         </tr>
@@ -475,6 +484,9 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                                     className="h-full w-full object-cover"
                                   />
                                 </div>
+                              </td>
+                              <td className="p-4 text-xs font-mono text-slate-500 whitespace-nowrap">
+                                {p.sku || "—"}
                               </td>
                               <td className="p-4 font-bold text-slate-900 max-w-[240px] truncate" title={p.name}>
                                 {p.name}
@@ -834,6 +846,18 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                       />
                       <span className="text-sm text-slate-800">{formInStock ? "Наличен" : "Неналичен (очаква се доставка)"}</span>
                     </label>
+                  </div>
+
+                  {/* Article number (SKU) */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Артикулен номер</label>
+                    <input
+                      type="text"
+                      value={formSku}
+                      onChange={(e) => setFormSku(e.target.value)}
+                      placeholder="напр. KP-100042"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 font-mono focus:outline-none focus:border-violet-600 transition-all"
+                    />
                   </div>
 
                   {/* Price */}

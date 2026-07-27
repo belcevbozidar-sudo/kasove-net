@@ -26,7 +26,7 @@ export default function SectionHeading({
         {subtitle && <p className="mt-1.5 text-sm text-text-muted max-w-xl">{subtitle}</p>}
       </div>
       {href && (
-        <Link href={href} className="hidden sm:flex shrink-0 items-center gap-1 text-sm font-semibold text-accent-lime hover:brightness-110">
+        <Link href={href} className="flex shrink-0 items-center gap-1 text-sm font-semibold text-accent-lime hover:brightness-110">
           {hrefLabel} <ChevronRightIcon className="w-4 h-4" />
         </Link>
       )}

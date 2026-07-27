@@ -61,8 +61,18 @@ export default function ProductPurchasePanel({
         </div>
       </div>
 
-      {outOfStock && (
-        <p className="text-sm font-semibold text-sale">Неналичен · очаква се доставка</p>
+      {outOfStock ? (
+        <p className="text-sm font-semibold text-sale">
+          Неналичен · очаква се доставка
+          {product.sku && <span className="text-text-muted font-normal"> · Арт. № {product.sku}</span>}
+        </p>
+      ) : (
+        product.sku && (
+          <p className="text-sm">
+            <span className="font-semibold text-success">В наличност</span>
+            <span className="text-text-muted"> · Арт. № {product.sku}</span>
+          </p>
+        )
       )}
 
       <div className="flex items-end gap-3">

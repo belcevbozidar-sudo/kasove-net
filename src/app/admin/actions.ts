@@ -174,6 +174,7 @@ export async function saveProduct(data: {
   features: string[];
   badge?: string;
   inStock?: boolean;
+  sku?: string;
 }) {
   const hasSession = await checkAdminSession();
   if (!hasSession) throw new Error("Unauthorized");
@@ -198,6 +199,7 @@ export async function saveProduct(data: {
         features: data.features,
         badge: data.badge || undefined,
         inStock: data.inStock,
+        sku: data.sku,
       });
     } else {
       // Add
@@ -213,6 +215,7 @@ export async function saveProduct(data: {
         features: data.features,
         badge: data.badge || undefined,
         inStock: data.inStock,
+        sku: data.sku,
       });
     }
     return { success: true };

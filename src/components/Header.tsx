@@ -23,6 +23,7 @@ export default function Header() {
 
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const { itemCount, openDrawer } = useCart();
   const router = useRouter();
 
@@ -137,7 +138,10 @@ export default function Header() {
               <button
                 className="rounded-lg p-2 hover:bg-surface lg:hidden"
                 aria-label="Търсене"
-                onClick={() => router.push("/shop")}
+                onClick={() => {
+                  setMobileSearchOpen((v) => !v);
+                  setShowDropdown(false);
+                }}
               >
                 <SearchIcon className="w-5 h-5" />
               </button>
@@ -151,6 +155,82 @@ export default function Header() {
               </button>
             </div>
           </div>
+
+          {mobileSearchOpen && (
+            <div className="relative border-t border-border-c px-4 py-3 lg:hidden">
+              <form
+                onSubmit={(e) => {
+                  submitSearch(e);
+                  setMobileSearchOpen(false);
+                }}
+                className="flex items-center gap-2 rounded-full border border-border-c bg-surface-2 px-4 py-2.5"
+              >
+                <SearchIcon className="w-4 h-4 text-text-muted" />
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  type="text"
+                  placeholder="Търси калъф, модел телефон, аксесоар..."
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-text-muted text-text"
+                />
+              </form>
+
+              {showDropdown && query.trim().length >= 2 && (
+                <div className="mt-2 rounded-2xl border border-border-c bg-bg p-2.5 shadow-2xl max-h-[360px] overflow-y-auto">
+                  {searchResult === undefined ? (
+                    <div className="p-4 text-center text-xs text-text-muted">Търсене...</div>
+                  ) : suggestions.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-text-muted">Няма намерени предложения</div>
+                  ) : (
+                    <div className="space-y-1">
+                      {suggestions.map((p: any) => (
+                        <Link
+                          key={p.slug}
+                          href={`/product/${p.slug}`}
+                          onClick={() => {
+                            setShowDropdown(false);
+                            setMobileSearchOpen(false);
+                            setQuery("");
+                          }}
+                          className="flex items-center gap-3 rounded-xl p-2 hover:bg-surface transition-colors text-left"
+                        >
+                          <div className="h-10 w-10 shrink-0 rounded-lg bg-surface-2 overflow-hidden flex items-center justify-center border border-border-c">
+                            <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-text truncate">{p.name}</p>
+                            <p className="text-[10px] text-text-muted uppercase tracking-wider">
+                              {formatModelDisplay(p.brand, p.model)}
+                            </p>
+                          </div>
+                          <span className="text-xs font-bold text-accent-lime shrink-0">
+                            {formatPrice(p.price)}
+                          </span>
+                        </Link>
+                      ))}
+                      <div className="border-t border-border-c mt-2 pt-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            router.push(`/shop?q=${encodeURIComponent(query.trim())}`);
+                            setShowDropdown(false);
+                            setMobileSearchOpen(false);
+                          }}
+                          className="text-xs font-bold text-accent hover:underline"
+                        >
+                          Виж всички резултати за "{query}"
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <nav className="hidden lg:block border-t border-border-c bg-surface/90 backdrop-blur-md">
             <div className="mx-auto flex max-w-7xl items-center justify-between container-p py-0 text-[13px] font-extrabold uppercase tracking-wide text-text relative">

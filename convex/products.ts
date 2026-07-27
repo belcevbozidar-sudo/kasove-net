@@ -39,6 +39,34 @@ function getModelVariations(model: string, brand: string): string[] {
   return Array.from(variations).filter(v => v.length > 0);
 }
 
+// Recognizes a query like "KP-100042", "kp100042" or just "100042" as an
+// article-number lookup (as opposed to a normal free-text name search), and
+// returns matching products by SKU prefix — or null if `q` doesn't look like
+// a SKU at all, so callers can fall back to the regular name search.
+async function trySkuSearch(
+  ctx: { db: any },
+  q: string,
+  category: string | undefined,
+  brand: string | undefined
+): Promise<Doc<"products">[] | null> {
+  const trimmed = q.trim().toUpperCase().replace(/\s+/g, "");
+  const match = trimmed.match(/^(?:KP-?)?(\d{2,6})$/);
+  if (!match) return null;
+
+  const prefix = `KP-${match[1]}`;
+  const candidates = await ctx.db
+    .query("products")
+    .withIndex("by_sku", (qq: any) => qq.gte("sku", prefix))
+    .take(25);
+  const matches = candidates.filter(
+    (p: Doc<"products">) =>
+      p.sku &&
+      p.sku.startsWith(prefix) &&
+      (!category || p.category === category) &&
+      (!brand || p.brand === brand)
+  );
+  return matches;
+}
 
 export const getBySlug = query({
   args: { slug: v.string() },
@@ -106,16 +134,21 @@ export const list = query({
 
       let products: Doc<"products">[] = [];
       if (q && q.trim()) {
-        const searchResults = await ctx.db
-          .query("products")
-          .withSearchIndex("search_name", (query) => {
-            let sq = query.search("name", q.trim());
-            if (category) sq = sq.eq("category", category);
-            if (brand) sq = sq.eq("brand", brand);
-            return sq;
-          })
-          .take(1000);
-        products = searchResults;
+        const skuMatches = await trySkuSearch(ctx, q, category, brand);
+        if (skuMatches) {
+          products = skuMatches;
+        } else {
+          const searchResults = await ctx.db
+            .query("products")
+            .withSearchIndex("search_name", (query) => {
+              let sq = query.search("name", q.trim());
+              if (category) sq = sq.eq("category", category);
+              if (brand) sq = sq.eq("brand", brand);
+              return sq;
+            })
+            .take(1000);
+          products = searchResults;
+        }
       } else if (brand && model && model !== "all") {
         const variations = getModelVariations(model, brand);
         const allModelProducts = [];
@@ -216,6 +249,15 @@ export const list = query({
 
     // Free-text search takes priority; relevance-ranked, no custom sort.
     if (q && q.trim()) {
+      const skuMatches = await trySkuSearch(ctx, q, category, brand);
+      if (skuMatches) {
+        return {
+          page: skuMatches.slice(0, paginationOpts.numItems),
+          isDone: true,
+          continueCursor: "",
+          totalCount: skuMatches.length as number | null,
+        };
+      }
       let searchQuery = ctx.db
         .query("products")
         .withSearchIndex("search_name", (query) => {
@@ -663,6 +705,7 @@ export const adminAddProduct = mutation({
     features: v.array(v.string()),
     badge: v.optional(v.string()),
     inStock: v.optional(v.boolean()),
+    sku: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     let baseSlug = slugify(args.name);
@@ -680,6 +723,13 @@ export const adminAddProduct = mutation({
 
     const sourceId = `prod_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const image = args.gallery[0] || "/images/placeholder.png";
+
+    let sku = args.sku?.trim();
+    if (!sku) {
+      const last = await ctx.db.query("products").withIndex("by_sku").order("desc").first();
+      const lastNum = last?.sku ? parseInt(last.sku.replace(/^KP-/, ""), 10) : 100000;
+      sku = `KP-${(Number.isFinite(lastNum) ? lastNum : 100000) + 1}`;
+    }
 
     const product = {
       sourceId,
@@ -699,6 +749,7 @@ export const adminAddProduct = mutation({
       features: args.features,
       badge: args.badge,
       inStock: args.inStock ?? true,
+      sku,
     };
 
     const id = await ctx.db.insert("products", product);
@@ -721,6 +772,7 @@ export const adminUpdateProduct = mutation({
     features: v.array(v.string()),
     badge: v.optional(v.string()),
     inStock: v.optional(v.boolean()),
+    sku: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -764,6 +816,7 @@ export const adminUpdateProduct = mutation({
       features: args.features,
       badge: args.badge,
       inStock: args.inStock ?? true,
+      sku: args.sku?.trim() || existing.sku,
     });
 
     if (oldCategory !== args.category || oldBrand !== args.brand) {
@@ -808,6 +861,34 @@ export const adminMigratePatchNameBundle = mutation({
     if (bundleWith !== undefined) patch.bundleWith = bundleWith;
     await ctx.db.patch(existing._id, patch);
     return true;
+  },
+});
+
+// One-off data-migration helper (used by scripts/backfill-sku.js) — patches
+// only the `sku` field, to assign article numbers to existing products.
+export const adminSetSku = mutation({
+  args: { sourceId: v.string(), sku: v.string() },
+  handler: async (ctx, { sourceId, sku }) => {
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+      .unique();
+    if (!existing) return false;
+    await ctx.db.patch(existing._id, { sku });
+    return true;
+  },
+});
+
+// Returns the next unused SKU (e.g. current highest "KP-100042" -> "KP-100043"),
+// so both the admin "new product" form and the backfill script agree on one
+// counter instead of guessing independently.
+export const getNextSku = query({
+  args: {},
+  handler: async (ctx) => {
+    const last = await ctx.db.query("products").withIndex("by_sku").order("desc").first();
+    const lastNum = last?.sku ? parseInt(last.sku.replace(/^KP-/, ""), 10) : 100000;
+    const nextNum = (Number.isFinite(lastNum) ? lastNum : 100000) + 1;
+    return `KP-${nextNum}`;
   },
 });
 

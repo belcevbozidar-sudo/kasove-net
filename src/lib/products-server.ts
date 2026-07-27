@@ -139,12 +139,15 @@ export async function getBundleProducts(product: Product): Promise<Product[]> {
     const cleanedCaseModel = cleanModelName(product.model, product.brand);
     if (!cleanedCaseModel) return [];
 
-    // Split cleaned model name into keywords (e.g. "S24 Ultra" -> ["s24", "ultra"])
-    // Filter out "5g" and "4g" since screen protectors often omit them
-    const modelWords = cleanedCaseModel
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(w => w.length > 0 && w !== "5g" && w !== "4g");
+    // Word *set* of the case's model (e.g. "S24 Ultra" -> {s24, ultra}),
+    // with the 5G/4G connectivity tag ignored since it's not a distinct
+    // model as far as case/protector fit is concerned.
+    const caseWords = new Set(
+      cleanedCaseModel
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 0 && w !== "5g" && w !== "4g")
+    );
 
     // Fetch all protectors for this brand
     const result = await fetchQuery(api.products.list, {
@@ -158,12 +161,32 @@ export async function getBundleProducts(product: Product): Promise<Product[]> {
 
     if (result.page && result.page.length > 0) {
       const protectors = result.page.map(toProduct);
-      
-      // Filter protectors whose name contains ALL words of the case model name
+
+      // A protector's model must match the case's model *exactly* (same
+      // word set) — not just contain it. Otherwise a plain "S26" case
+      // would also match "S26 Ultra" protectors, since "S26 Ultra"
+      // trivially contains the substring "s26". Check both the model
+      // field and the full name (whichever parses into a clean model),
+      // since scraped data sometimes has the real model only in one of
+      // the two.
+      function modelWordSet(raw: string): Set<string> | null {
+        const cleaned = cleanModelName(raw, product.brand);
+        if (!cleaned) return null;
+        const words = cleaned
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((w) => w.length > 0 && w !== "5g" && w !== "4g");
+        return words.length > 0 ? new Set(words) : null;
+      }
+
+      function sameModel(words: Set<string> | null): boolean {
+        if (!words || words.size !== caseWords.size) return false;
+        for (const w of words) if (!caseWords.has(w)) return false;
+        return true;
+      }
+
       const compatible = protectors.filter((p: any) => {
-        const nameLower = p.name.toLowerCase();
-        const modelLower = p.model ? p.model.toLowerCase() : "";
-        return modelWords.every(word => nameLower.includes(word) || modelLower.includes(word));
+        return sameModel(modelWordSet(p.model || "")) || sameModel(modelWordSet(p.name));
       });
 
       // Defense in depth: two protector listings that differ only by a
