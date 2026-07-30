@@ -64,7 +64,6 @@ export default function CategoryLinks() {
       {/* Grid Container for Categories (2 rows of 3) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {categories
-          .filter((c) => c.slug !== "car-stands")
           .map((c) => (
             <div
               key={c.slug}

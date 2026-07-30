@@ -52,6 +52,7 @@ export const categories: Category[] = [
   { slug: "chargers-220v", name: "Оригинални зарядни 220V", shortName: "Зарядни 220V", icon: "bolt" },
   { slug: "usb-cables", name: "USB кабели", shortName: "Кабели", icon: "cable" },
   { slug: "car-stands", name: "Стойки за кола", shortName: "Стойки кола", icon: "stand" },
+  { slug: "bluetooth-headphones", name: "Блутут слушалки", shortName: "Слушалки", icon: "case" },
   { slug: "toys", name: "Метални колички и играчки", shortName: "Колички", icon: "case" },
 ];
 

@@ -127,7 +127,7 @@ export default async function ShopPage({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8 w-full">
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-4 lg:grid-cols-4 w-full">
             {brands
               .filter(b => b.slug !== "universal" && b.slug !== "other" && b.slug !== "diecast-cars")
               .map((b) => {
