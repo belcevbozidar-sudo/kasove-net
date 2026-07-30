@@ -185,8 +185,33 @@ export async function getBundleProducts(product: Product): Promise<Product[]> {
         return true;
       }
 
+      // Combined multi-model protectors ("... Honor 600 / 600 Pro ...")
+      // carry only one value in `model`, so also try every slash-separated
+      // segment of the name as a standalone model mention. Word-set equality
+      // keeps this precise: a segment like "600 Pro" matches the 600 Pro
+      // case but a plain "600" case only matches the "Honor 600" segment.
+      function segmentMatchesModel(name: string): boolean {
+        const brandWord = product.brand.toLowerCase();
+        return name.split("/").some((seg) => {
+          const words = seg
+            .split(" - ")[0]
+            .toLowerCase()
+            .split(/\s+/)
+            .filter(
+              (w) =>
+                w.length > 0 && w !== brandWord && w !== "galaxy" && w !== "5g" && w !== "4g"
+            );
+          if (words.length === 0 || words.length !== caseWords.size) return false;
+          return words.every((w) => caseWords.has(w));
+        });
+      }
+
       const compatible = protectors.filter((p: any) => {
-        return sameModel(modelWordSet(p.model || "")) || sameModel(modelWordSet(p.name));
+        return (
+          sameModel(modelWordSet(p.model || "")) ||
+          sameModel(modelWordSet(p.name)) ||
+          segmentMatchesModel(p.name)
+        );
       });
 
       // Defense in depth: two protector listings that differ only by a

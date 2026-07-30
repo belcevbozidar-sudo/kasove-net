@@ -38,6 +38,30 @@ function getModelVariations(model: string, brand: string): string[] {
   return Array.from(variations).filter(v => v.length > 0);
 }
 
+// Combined multi-model products ("... Honor 600 / 600 Pro ...") carry only
+// one value in `model`, so an exact model-index lookup misses them for the
+// other model(s) they fit. This checks whether any slash-separated segment
+// of the NAME mentions exactly the requested model (word-set equality, so a
+// "600 Pro" filter doesn't match a plain "600" segment or vice versa).
+function nameSegmentMatchesModel(name: string, model: string, brand: string): boolean {
+  const brandWord = brand.toLowerCase();
+  const targetWords = model
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 0 && w !== brandWord && w !== "galaxy" && w !== "5g" && w !== "4g");
+  const target = new Set(targetWords);
+  if (target.size === 0) return false;
+  return name.split("/").some((seg) => {
+    const words = seg
+      .split(" - ")[0]
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 0 && w !== brandWord && w !== "galaxy" && w !== "5g" && w !== "4g");
+    if (words.length !== target.size) return false;
+    return words.every((w) => target.has(w));
+  });
+}
+
 // Recognizes a query like "KP-100042", "kp100042" or just "100042" as an
 // article-number lookup (as opposed to a normal free-text name search), and
 // returns matching products by SKU prefix — or null if `q` doesn't look like
@@ -165,6 +189,18 @@ export const list = query({
             }
           }
         }
+        // Combined multi-model products live under a different `model` value —
+        // find them by name and filter to exact slash-segment mentions.
+        const nameCandidates = await ctx.db
+          .query("products")
+          .withSearchIndex("search_name", (sq) => sq.search("name", model).eq("brand", brand))
+          .take(200);
+        for (const doc of nameCandidates) {
+          if (!seenIds.has(doc._id) && nameSegmentMatchesModel(doc.name, model, brand)) {
+            seenIds.add(doc._id);
+            allModelProducts.push(doc);
+          }
+        }
         products = category ? allModelProducts.filter((p) => p.category === category) : allModelProducts;
       } else if (model && model !== "all") {
         const variations = getModelVariations(model, brand || "universal");
@@ -181,6 +217,18 @@ export const list = query({
               seenIds.add(doc._id);
               allModelProducts.push(doc);
             }
+          }
+        }
+        // Combined multi-model products live under a different `model` value —
+        // find them by name and filter to exact slash-segment mentions.
+        const nameCandidates = await ctx.db
+          .query("products")
+          .withSearchIndex("search_name", (sq) => sq.search("name", model))
+          .take(200);
+        for (const doc of nameCandidates) {
+          if (!seenIds.has(doc._id) && nameSegmentMatchesModel(doc.name, model, doc.brand)) {
+            seenIds.add(doc._id);
+            allModelProducts.push(doc);
           }
         }
         products = category ? allModelProducts.filter((p) => p.category === category) : allModelProducts;
