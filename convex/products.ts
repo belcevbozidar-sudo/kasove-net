@@ -899,6 +899,23 @@ export const adminFixPriceUnits = mutation({
   },
 });
 
+// One-off data-migration helper (used by scripts/apply-descriptions.js) —
+// replaces the generic templated description with the real per-product text
+// scraped from the business's original site (keisove.net, matched by
+// sourceId = old article number / Drupal node ID).
+export const adminSetDescription = mutation({
+  args: { sourceId: v.string(), description: v.string() },
+  handler: async (ctx, { sourceId, description }) => {
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+      .unique();
+    if (!existing) return false;
+    await ctx.db.patch(existing._id, { description });
+    return true;
+  },
+});
+
 // Returns the next unused SKU (e.g. current highest "KP-100042" -> "KP-100043"),
 // so both the admin "new product" form and the backfill script agree on one
 // counter instead of guessing independently.

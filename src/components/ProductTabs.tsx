@@ -38,7 +38,7 @@ export default function ProductTabs({ product }: { product: Product }) {
       </div>
 
       <div className="py-6 max-w-2xl">
-        {tab === "description" && <p className="text-sm leading-relaxed text-text-muted">{product.description}</p>}
+        {tab === "description" && <p className="text-sm leading-relaxed text-text-muted whitespace-pre-line">{product.description}</p>}
 
         {/* Same content as the desktop right-column panel — this tab is mobile-only (hidden lg:hidden above) */}
         {tab === "specs" && (
