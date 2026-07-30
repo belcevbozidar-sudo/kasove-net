@@ -7,7 +7,6 @@ import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/data";
 import { formatModelDisplay } from "@/lib/format-model";
 import type { Product } from "@/lib/types";
-import StarRating from "./StarRating";
 import { EyeIcon, PlusIcon, ShieldIcon, TruckIcon, LockIcon } from "./Icons";
 import QuickOrderModal from "./QuickOrderModal";
 import ProductCharacteristics from "./ProductCharacteristics";
@@ -50,7 +49,6 @@ export default function ProductPurchasePanel({
         </span>
         <h1 className="mt-1 font-heading text-2xl sm:text-3xl font-extrabold leading-tight">{product.name}</h1>
         <div className="mt-2 flex items-center gap-3">
-          <StarRating rating={product.rating} reviewCount={product.reviewCount} size="md" />
           {outOfStock ? (
             <span className="rounded-full bg-slate-700 px-2.5 py-1 text-[11px] font-semibold text-white">Неналичен</span>
           ) : (

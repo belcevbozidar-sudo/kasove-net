@@ -4,7 +4,6 @@ import CategoryLinks from "@/components/CategoryLinks";
 import BundlePromoBanner from "@/components/BundlePromoBanner";
 import ProductRail from "@/components/ProductRail";
 import TrustBadges from "@/components/TrustBadges";
-import Testimonials from "@/components/Testimonials";
 import { getBestSellers, getNewArrivals } from "@/lib/products-server";
 
 export default async function Home() {
@@ -31,7 +30,6 @@ export default async function Home() {
         products={newArrivals}
       />
       <TrustBadges />
-      <Testimonials />
     </>
   );
 }

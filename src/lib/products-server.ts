@@ -253,11 +253,11 @@ export interface FilterResult {
   continueCursor: string;
 }
 
-const VALID_SORTS = new Set(["featured", "price-asc", "price-desc", "rating", "newest"]);
+const VALID_SORTS = new Set(["featured", "price-asc", "price-desc", "newest"]);
 
 export async function filterProducts(opts: FilterOptions): Promise<FilterResult> {
   const sort = opts.sort && VALID_SORTS.has(opts.sort)
-    ? (opts.sort as "featured" | "price-asc" | "price-desc" | "rating" | "newest")
+    ? (opts.sort as "featured" | "price-asc" | "price-desc" | "newest")
     : undefined;
   const result = await fetchQuery(api.products.list, {
     brand: opts.brand && opts.brand !== "all" ? opts.brand : undefined,

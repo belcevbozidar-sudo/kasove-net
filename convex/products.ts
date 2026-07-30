@@ -9,7 +9,6 @@ const SORTS = v.optional(
     v.literal("featured"),
     v.literal("price-asc"),
     v.literal("price-desc"),
-    v.literal("rating"),
     v.literal("newest")
   )
 );
@@ -230,7 +229,6 @@ export const list = query({
       const sorted = [...filtered].sort((a, b) => {
         if (sort === "price-asc") return a.price - b.price;
         if (sort === "price-desc") return b.price - a.price;
-        if (sort === "rating") return b.rating - a.rating;
         return b._creationTime - a._creationTime;
       });
 
@@ -278,7 +276,7 @@ export const list = query({
       return row?.count ?? null;
     })();
 
-    const order = sort === "price-desc" || sort === "rating" ? "desc" : "asc";
+    const order = sort === "price-desc" ? "desc" : "asc";
 
     if (category && brand) {
       // Combined filter: narrow via the compound equality index, then sort
@@ -314,7 +312,7 @@ export const list = query({
           .paginate(paginationOpts);
         return { ...result, totalCount };
       }
-      const indexName = sort === "rating" ? "by_category_rating" : "by_category_price";
+      const indexName = "by_category_price";
       const result = await ctx.db
         .query("products")
         .withIndex(indexName, (qq) => qq.eq("category", category))
@@ -339,7 +337,7 @@ export const list = query({
           .paginate(paginationOpts);
         return { ...result, totalCount };
       }
-      const indexName = sort === "rating" ? "by_brand_rating" : "by_brand_price";
+      const indexName = "by_brand_price";
       const result = await ctx.db
         .query("products")
         .withIndex(indexName, (qq) => qq.eq("brand", brand))
@@ -357,7 +355,7 @@ export const list = query({
       const result = await ctx.db.query("products").order("desc").paginate(paginationOpts);
       return { ...result, totalCount };
     }
-    const indexName = sort === "rating" ? "by_rating" : "by_price";
+    const indexName = "by_price";
     const result = await ctx.db
       .query("products")
       .withIndex(indexName)
@@ -369,14 +367,13 @@ export const list = query({
 
 function paginateInMemory(
   all: Doc<"products">[],
-  sort: "price-asc" | "price-desc" | "rating" | "newest",
+  sort: "price-asc" | "price-desc" | "newest",
   paginationOpts: { numItems: number; cursor: string | null }
 ) {
   const sorted = [...all].sort((a, b) => {
     if (sort === "price-asc") return a.price - b.price;
     if (sort === "price-desc") return b.price - a.price;
-    if (sort === "newest") return b._creationTime - a._creationTime;
-    return b.rating - a.rating;
+    return b._creationTime - a._creationTime;
   });
   const start = paginationOpts.cursor ? parseInt(paginationOpts.cursor, 10) : 0;
   const end = start + paginationOpts.numItems;
@@ -398,7 +395,7 @@ export const getBestSellers = query({
       .withIndex("by_hasOldPrice", (q) => q.eq("hasOldPrice", true))
       .take(limit);
     if (results.length > 0) return results;
-    return await ctx.db.query("products").withIndex("by_rating").order("desc").take(limit);
+    return await ctx.db.query("products").order("desc").take(limit);
   },
 });
 
@@ -743,8 +740,8 @@ export const adminAddProduct = mutation({
       hasOldPrice: !!args.oldPrice && args.oldPrice > args.price,
       image,
       gallery: args.gallery,
-      rating: 4.8,
-      reviewCount: Math.floor(Math.random() * 15) + 5,
+      rating: 0,
+      reviewCount: 0,
       description: args.description,
       features: args.features,
       badge: args.badge,
@@ -913,6 +910,30 @@ export const adminSetDescription = mutation({
     if (!existing) return false;
     await ctx.db.patch(existing._id, { description });
     return true;
+  },
+});
+
+// One-off data-migration helper (used by scripts/dedupe-galleries.js) — the
+// original catalog import wrote each product's gallery list twice
+// ([A,B,C,A,B,C]), so nearly every product showed its photos duplicated.
+// Dedupes in batches server-side (no files are touched — the duplicate
+// entries reference the same storage URLs).
+export const adminDedupeGalleries = mutation({
+  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { cursor, limit }) => {
+    const page = await ctx.db
+      .query("products")
+      .paginate({ cursor, numItems: limit });
+    let patched = 0;
+    for (const p of page.page) {
+      const gallery = p.gallery ?? [];
+      const uniq = [...new Set(gallery)];
+      if (uniq.length < gallery.length) {
+        await ctx.db.patch(p._id, { gallery: uniq });
+        patched++;
+      }
+    }
+    return { patched, scanned: page.page.length, cursor: page.continueCursor, isDone: page.isDone };
   },
 });
 

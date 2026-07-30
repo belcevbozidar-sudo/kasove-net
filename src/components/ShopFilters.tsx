@@ -139,7 +139,6 @@ export default function ShopFilters({
           <option value="featured">Препоръчани</option>
           <option value="price-asc">Цена: ниска към висока</option>
           <option value="price-desc">Цена: висока към ниска</option>
-          <option value="rating">Най-високо оценени</option>
         </select>
       </div>
     </div>

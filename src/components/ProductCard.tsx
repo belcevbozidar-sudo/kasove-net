@@ -5,7 +5,6 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/data";
 import { formatModelDisplay } from "@/lib/format-model";
 import type { Product } from "@/lib/types";
-import StarRating from "./StarRating";
 import { useCart } from "@/lib/cart-context";
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -53,7 +52,6 @@ export default function ProductCard({ product }: { product: Product }) {
         <Link href={`/product/${product.slug}`} className="font-heading text-sm font-semibold leading-snug line-clamp-3 hover:text-accent transition-colors">
           {product.name}
         </Link>
-        <StarRating rating={product.rating} reviewCount={product.reviewCount} />
         {product.sku && (
           <p className="text-[10px] text-text-muted">
             <span className={outOfStock ? "text-sale font-semibold" : "text-success font-semibold"}>
