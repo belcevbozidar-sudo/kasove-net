@@ -38,6 +38,8 @@ export const brands: Brand[] = [
   { slug: "honor", name: "Honor", tagline: "Honor аксесоари" },
   { slug: "motorola", name: "Motorola", tagline: "Moto аксесоари" },
   { slug: "huawei", name: "Huawei", tagline: "Huawei аксесоари" },
+  { slug: "nokia", name: "Nokia", tagline: "Nokia аксесоари" },
+  { slug: "realme", name: "Realme", tagline: "Realme аксесоари" },
   { slug: "other", name: "Други", tagline: "Аксесоари за други марки" }
 ];
 

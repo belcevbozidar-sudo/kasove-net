@@ -13,6 +13,14 @@ export const metadata = {
   title: "Магазин — Кейсове.нет",
 };
 
+// Brands with a generated background photo at /images/brands/<slug>.jpg —
+// any brand not in this set falls back to a themed gradient below.
+const BRAND_PHOTO_SLUGS = new Set(["apple", "samsung", "xiaomi", "honor", "motorola", "huawei", "nokia", "realme"]);
+const BRAND_GRADIENTS: Record<string, string> = {
+  nokia: "from-cyan-500/70 via-sky-900 to-zinc-950",
+  realme: "from-amber-400/70 via-amber-900 to-zinc-950",
+};
+
 interface ShopSearchParams {
   brand?: string;
   category?: string;
@@ -119,7 +127,7 @@ export default async function ShopPage({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 max-w-4xl mx-auto w-full">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8 w-full">
             {brands
               .filter(b => b.slug !== "universal" && b.slug !== "other" && b.slug !== "diecast-cars")
               .map((b) => {
@@ -132,12 +140,18 @@ export default async function ShopPage({
                     href={`/shop?${queryStr.toString()}`}
                     className="group relative flex aspect-[1.45/1] flex-col items-center justify-between rounded-[2rem] border border-border-c bg-zinc-950 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.03] overflow-hidden"
                   >
-                    {/* Generated Brand Image Background */}
-                    <img
-                      src={`/images/brands/${b.slug}.jpg`}
-                      alt={`${b.name} background`}
-                      className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-500"
-                    />
+                    {/* Generated Brand Image Background, or a themed gradient for brands without one yet */}
+                    {BRAND_PHOTO_SLUGS.has(b.slug) ? (
+                      <img
+                        src={`/images/brands/${b.slug}.jpg`}
+                        alt={`${b.name} background`}
+                        className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-500"
+                      />
+                    ) : (
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-br ${BRAND_GRADIENTS[b.slug] ?? "from-zinc-700 to-zinc-950"} opacity-70 group-hover:opacity-85 transition-all duration-500`}
+                      />
+                    )}
 
                     {/* Dark gradient overlay for text readability */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
