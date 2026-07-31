@@ -392,10 +392,7 @@
     "P Smart Pro X",
     "P Smart S",
     "P Smart Z",
-    "гръб",
-    "колан",
-    "метални рингове",
-    "часовник bSmart PET"
+    "метални рингове"
   ],
   "samsung": [
     "S26 Ultra",
@@ -487,7 +484,6 @@
     "Note 10 N970",
     "Note 10 N975",
     "Note 9",
-    "amsung Note 8 N950",
     "Note 8",
     "Note 8 N950",
     "Note 5 N920",
@@ -498,13 +494,11 @@
     "Note i9220 с издърпване",
     "Note II",
     "A80",
-    "Samsug A80",
     "A73",
     "A72",
     "A71",
     "A70",
     "A70s",
-    "Samsug A70",
     "A57",
     "A57 Baby Pink",
     "A57 Coral",
@@ -555,7 +549,6 @@
     "A20e",
     "A20s",
     "A20е",
-    "Samsug A20e",
     "A17",
     "A16",
     "A16 Yellow",
@@ -657,7 +650,6 @@
     "S5610 Primo",
     "Mini S5570",
     "Pocket Neo S5310",
-    "таблет Samsung Tab A 2016",
     "Tab S T800",
     "M62",
     "GalaxyA50",
@@ -685,13 +677,7 @@
     "Xcover Pro",
     "Case",
     "Soft Case",
-    "камерата",
-    "карта",
-    "карти",
-    "колан",
-    "писалка",
-    "ръка",
-    "таблет"
+    "камерата"
   ],
   "motorola": [
     "Moto G Play 2021",
@@ -825,8 +811,7 @@
     "One Fusion Plus",
     "One Macro",
     "One Vision",
-    "One Zoom",
-    "камерата"
+    "One Zoom"
   ],
   "realme": [
     "C75",
@@ -897,7 +882,6 @@
     "HMD Pulse Plus",
     "HMD Skyline",
     "Tech",
-    "мобилен телефон",
     "таблет",
     "таблет със стойка"
   ],
@@ -967,8 +951,7 @@
     "1 Plus",
     "1.3",
     "1.4",
-    "X Dual",
-    "ръка"
+    "X Dual"
   ],
   "google": [
     "Motorola MoGoogle Pixel 9",
@@ -1021,8 +1004,7 @@
     "Xperia XA",
     "Xperia XA Ultra",
     "Xperia XZ Premium",
-    "XZ Premium",
-    "ръка"
+    "XZ Premium"
   ],
   "alcatel": [
     "5 5086D",
