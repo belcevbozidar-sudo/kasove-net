@@ -37,7 +37,10 @@ export default function Header() {
 
   function submitSearch(e: React.FormEvent) {
     e.preventDefault();
-    router.push(query.trim() ? `/shop?q=${encodeURIComponent(query.trim())}` : "/shop");
+    const trimmed = query.trim();
+    router.push(trimmed ? `/shop?q=${encodeURIComponent(trimmed)}` : "/shop");
+    setQuery("");
+    setShowDropdown(false);
     setMobileOpen(false);
   }
 
@@ -120,6 +123,7 @@ export default function Header() {
                             type="button"
                             onClick={() => {
                               router.push(`/shop?q=${encodeURIComponent(query.trim())}`);
+                              setQuery("");
                               setShowDropdown(false);
                             }}
                             className="text-xs font-bold text-accent hover:underline"
@@ -175,12 +179,12 @@ export default function Header() {
                   }}
                   type="text"
                   placeholder="Търси калъф, модел телефон, аксесоар..."
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-text-muted text-text"
+                  className="w-full bg-transparent text-base outline-none placeholder:text-text-muted text-text"
                 />
               </form>
 
               {showDropdown && query.trim().length >= 2 && (
-                <div className="mt-2 rounded-2xl border border-border-c bg-bg p-2.5 shadow-2xl max-h-[360px] overflow-y-auto">
+                <div className="relative z-50 mt-2 rounded-2xl border border-border-c bg-bg p-2.5 shadow-2xl max-h-[360px] overflow-y-auto">
                   {searchResult === undefined ? (
                     <div className="p-4 text-center text-xs text-text-muted">Търсене...</div>
                   ) : suggestions.length === 0 ? (
@@ -217,6 +221,7 @@ export default function Header() {
                           type="button"
                           onClick={() => {
                             router.push(`/shop?q=${encodeURIComponent(query.trim())}`);
+                            setQuery("");
                             setShowDropdown(false);
                             setMobileSearchOpen(false);
                           }}
@@ -508,7 +513,7 @@ export default function Header() {
                   onFocus={() => setShowDropdown(true)}
                   type="text"
                   placeholder="Търси..."
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-text-muted text-text"
+                  className="w-full bg-transparent text-base outline-none placeholder:text-text-muted text-text"
                 />
               </form>
 

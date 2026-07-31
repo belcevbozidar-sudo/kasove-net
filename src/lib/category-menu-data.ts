@@ -211,12 +211,14 @@ export const categoryMenuData: MenuCategory[] = [
     ],
   },
   {
-    name: "ДЕТСКИ ИГРАЧКИ",
+    name: "МЕТАЛНИ КОЛИЧКИ",
     slug: "toys",
     href: "/shop?category=toys",
     subcategories: [
-      { name: "Всички играчки", href: "/shop?category=toys" },
-      { name: "Метални колички", href: "/shop?category=toys" },
+      { name: "Всички колички", href: "/shop?category=toys" },
+      { name: "Мащаб 1:18", href: "/shop?category=toys&scale=1-18" },
+      { name: "Мащаб 1:24", href: "/shop?category=toys&scale=1-24" },
+      { name: "Мащаб 1:32", href: "/shop?category=toys&scale=1-32" },
     ],
   },
   {

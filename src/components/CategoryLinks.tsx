@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { categories, brands } from "@/lib/data";
+import { categories, brands, NON_PHONE_CATEGORIES } from "@/lib/data";
 import { formatModelDisplay } from "@/lib/format-model";
 import brandModelsData from "@/lib/models.json";
 
@@ -32,6 +32,12 @@ export default function CategoryLinks() {
 
 
   const handleCategoryClick = (categorySlug: string) => {
+    // Non-phone categories (e.g. toys) aren't tied to a phone brand/model —
+    // skip the wizard and go straight to the listing, same as the header nav.
+    if (NON_PHONE_CATEGORIES.has(categorySlug)) {
+      router.push(`/shop?category=${categorySlug}`);
+      return;
+    }
     setSelectedCategory(categorySlug);
     setSelectedBrand(null);
     setSelectedModel("");
