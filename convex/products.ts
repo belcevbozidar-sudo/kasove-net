@@ -133,8 +133,17 @@ export const list = query({
     model: v.optional(v.string()),
     maxPrice: v.optional(v.number()),
     paginationOpts: paginationOptsValidator,
+    // Numbered pagination ("1 2 ... N") needs the true LAST page without
+    // walking every page in between — infeasible with Convex's opaque
+    // forward-only cursors at 35k+ rows. Instead, when this is set, every
+    // indexed branch below fetches from the *opposite* end of its index
+    // (order flipped, `.take(numItems)`) and reverses the result — which is
+    // exactly the last page's contents, at the same O(numItems) cost as any
+    // other page, regardless of how many pages exist. Ignored for full-text
+    // search, which has no stable index to reverse and no known total.
+    jumpToLastPage: v.optional(v.boolean()),
   },
-  handler: async (ctx, { category, brand, sort, q, scale, model, maxPrice, paginationOpts }) => {
+  handler: async (ctx, { category, brand, sort, q, scale, model, maxPrice, paginationOpts, jumpToLastPage }) => {
     // If scale, model or maxPrice is specified, filter in-memory
     if ((scale && scale !== "all") || (model && model !== "all") || maxPrice !== undefined) {
       const scaleNum = scale ? (scale.includes("-") ? scale.split("-")[1] : scale.includes(":") ? scale.split(":")[1] : scale) : null;
@@ -282,7 +291,14 @@ export const list = query({
       });
 
 
-      const start = paginationOpts.cursor ? parseInt(paginationOpts.cursor, 10) : 0;
+      // This branch already sorts the whole filtered set into a plain array
+      // and pages it by numeric offset, so "last page" is just arithmetic —
+      // no separate reversed fetch needed here, unlike the indexed branches.
+      const start = jumpToLastPage
+        ? Math.max(0, sorted.length - (sorted.length % paginationOpts.numItems || paginationOpts.numItems))
+        : paginationOpts.cursor
+        ? parseInt(paginationOpts.cursor, 10)
+        : 0;
       const end = start + paginationOpts.numItems;
       const page = sorted.slice(start, end);
       const isDone = end >= sorted.length;
@@ -327,89 +343,88 @@ export const list = query({
 
     const order = sort === "price-desc" ? "desc" : "asc";
 
+    // Fetches the true last page of an already-index-filtered query by
+    // reading from the opposite end (order flipped) and reversing the
+    // result — same O(numItems) cost as a normal page, at any table size.
+    async function lastPageFrom(baseQuery: any, forwardOrder: "asc" | "desc") {
+      const reverseOrder = forwardOrder === "asc" ? "desc" : "asc";
+      const rows = await baseQuery.order(reverseOrder).take(paginationOpts.numItems);
+      return { page: rows.reverse(), isDone: true, continueCursor: "", totalCount };
+    }
+
     if (category && brand) {
       // Combined filter: narrow via the compound equality index, then sort
       // in-memory. These combos are always a small slice of the catalog
       // (a single brand within a single category), so this stays cheap.
       if (!sort || sort === "featured") {
-        const result = await ctx.db
+        const base = ctx.db
           .query("products")
-          .withIndex("by_brand_category", (qq) => qq.eq("brand", brand).eq("category", category))
-          .paginate(paginationOpts);
+          .withIndex("by_brand_category", (qq) => qq.eq("brand", brand).eq("category", category));
+        if (jumpToLastPage) return lastPageFrom(base, "asc");
+        const result = await base.paginate(paginationOpts);
         return { ...result, totalCount };
       }
       const all = await ctx.db
         .query("products")
         .withIndex("by_brand_category", (qq) => qq.eq("brand", brand).eq("category", category))
         .collect();
-      return paginateInMemory(all, sort, paginationOpts);
+      return paginateInMemory(all, sort, paginationOpts, jumpToLastPage);
     }
 
     if (category) {
       if (!sort || sort === "featured") {
-        const result = await ctx.db
-          .query("products")
-          .withIndex("by_category", (qq) => qq.eq("category", category))
-          .paginate(paginationOpts);
+        const base = ctx.db.query("products").withIndex("by_category", (qq) => qq.eq("category", category));
+        if (jumpToLastPage) return lastPageFrom(base, "asc");
+        const result = await base.paginate(paginationOpts);
         return { ...result, totalCount };
       }
       if (sort === "newest") {
-        const result = await ctx.db
-          .query("products")
-          .withIndex("by_category", (qq) => qq.eq("category", category))
-          .order("desc")
-          .paginate(paginationOpts);
+        const base = ctx.db.query("products").withIndex("by_category", (qq) => qq.eq("category", category));
+        if (jumpToLastPage) return lastPageFrom(base, "desc");
+        const result = await base.order("desc").paginate(paginationOpts);
         return { ...result, totalCount };
       }
-      const indexName = "by_category_price";
-      const result = await ctx.db
-        .query("products")
-        .withIndex(indexName, (qq) => qq.eq("category", category))
-        .order(order)
-        .paginate(paginationOpts);
+      const base = ctx.db.query("products").withIndex("by_category_price", (qq) => qq.eq("category", category));
+      if (jumpToLastPage) return lastPageFrom(base, order);
+      const result = await base.order(order).paginate(paginationOpts);
       return { ...result, totalCount };
     }
 
     if (brand) {
       if (!sort || sort === "featured") {
-        const result = await ctx.db
-          .query("products")
-          .withIndex("by_brand", (qq) => qq.eq("brand", brand))
-          .paginate(paginationOpts);
+        const base = ctx.db.query("products").withIndex("by_brand", (qq) => qq.eq("brand", brand));
+        if (jumpToLastPage) return lastPageFrom(base, "asc");
+        const result = await base.paginate(paginationOpts);
         return { ...result, totalCount };
       }
       if (sort === "newest") {
-        const result = await ctx.db
-          .query("products")
-          .withIndex("by_brand", (qq) => qq.eq("brand", brand))
-          .order("desc")
-          .paginate(paginationOpts);
+        const base = ctx.db.query("products").withIndex("by_brand", (qq) => qq.eq("brand", brand));
+        if (jumpToLastPage) return lastPageFrom(base, "desc");
+        const result = await base.order("desc").paginate(paginationOpts);
         return { ...result, totalCount };
       }
-      const indexName = "by_brand_price";
-      const result = await ctx.db
-        .query("products")
-        .withIndex(indexName, (qq) => qq.eq("brand", brand))
-        .order(order)
-        .paginate(paginationOpts);
+      const base = ctx.db.query("products").withIndex("by_brand_price", (qq) => qq.eq("brand", brand));
+      if (jumpToLastPage) return lastPageFrom(base, order);
+      const result = await base.order(order).paginate(paginationOpts);
       return { ...result, totalCount };
     }
 
     // No filters at all.
     if (!sort || sort === "featured") {
-      const result = await ctx.db.query("products").paginate(paginationOpts);
+      const base = ctx.db.query("products");
+      if (jumpToLastPage) return lastPageFrom(base, "asc");
+      const result = await base.paginate(paginationOpts);
       return { ...result, totalCount };
     }
     if (sort === "newest") {
-      const result = await ctx.db.query("products").order("desc").paginate(paginationOpts);
+      const base = ctx.db.query("products");
+      if (jumpToLastPage) return lastPageFrom(base, "desc");
+      const result = await base.order("desc").paginate(paginationOpts);
       return { ...result, totalCount };
     }
-    const indexName = "by_price";
-    const result = await ctx.db
-      .query("products")
-      .withIndex(indexName)
-      .order(order)
-      .paginate(paginationOpts);
+    const base = ctx.db.query("products").withIndex("by_price");
+    if (jumpToLastPage) return lastPageFrom(base, order);
+    const result = await base.order(order).paginate(paginationOpts);
     return { ...result, totalCount };
   },
 });
@@ -417,14 +432,19 @@ export const list = query({
 function paginateInMemory(
   all: Doc<"products">[],
   sort: "price-asc" | "price-desc" | "newest",
-  paginationOpts: { numItems: number; cursor: string | null }
+  paginationOpts: { numItems: number; cursor: string | null },
+  jumpToLastPage?: boolean
 ) {
   const sorted = [...all].sort((a, b) => {
     if (sort === "price-asc") return a.price - b.price;
     if (sort === "price-desc") return b.price - a.price;
     return b._creationTime - a._creationTime;
   });
-  const start = paginationOpts.cursor ? parseInt(paginationOpts.cursor, 10) : 0;
+  const start = jumpToLastPage
+    ? Math.max(0, sorted.length - (sorted.length % paginationOpts.numItems || paginationOpts.numItems))
+    : paginationOpts.cursor
+    ? parseInt(paginationOpts.cursor, 10)
+    : 0;
   const end = start + paginationOpts.numItems;
   const page = sorted.slice(start, end);
   const isDone = end >= sorted.length;

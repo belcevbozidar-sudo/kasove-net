@@ -269,6 +269,7 @@ export interface FilterOptions {
   maxPrice?: number;
   cursor?: string | null;
   numItems?: number;
+  jumpToLastPage?: boolean;
 }
 
 export interface FilterResult {
@@ -296,6 +297,7 @@ export async function filterProducts(opts: FilterOptions): Promise<FilterResult>
       numItems: opts.numItems ?? 24,
       cursor: opts.cursor ?? null,
     },
+    jumpToLastPage: opts.jumpToLastPage || undefined,
   });
 
 

@@ -26,3 +26,19 @@ export function prevLinkParams(history: string[]) {
   const h = history.slice(0, -1).join(",");
   return { cursor, h };
 }
+
+// `history[k-1]` is the cursor that was used to fetch page k (history[0] is
+// always START_CURSOR by construction — see nextLinkParams). Jumping back to
+// an earlier page the user has actually visited is therefore free: no Convex
+// call, just slicing the stack already accumulated while browsing forward.
+// Only reliable for pages reached by normal forward navigation — a page
+// reached via a direct jump (see jumpToLastPage) has no such history to pop,
+// so this safely falls back to page 1 rather than guessing.
+export function backNPagesParams(history: string[], currentPage: number, n: number) {
+  const targetPage = Math.max(1, currentPage - n);
+  if (targetPage <= 1) return { cursor: START_CURSOR, h: "" };
+  return {
+    cursor: history[targetPage - 1] ?? START_CURSOR,
+    h: history.slice(0, targetPage - 1).join(","),
+  };
+}

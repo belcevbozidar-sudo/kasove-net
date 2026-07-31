@@ -7,8 +7,11 @@ import BrandModelSelector from "@/components/BrandModelSelector";
 import { getBrand, getCategory, categories, brands, NON_PHONE_CATEGORIES } from "@/lib/data";
 import { formatModelDisplay } from "@/lib/format-model";
 import { filterProducts } from "@/lib/products-server";
-import { decodeCursor, decodeHistory, nextLinkParams, prevLinkParams } from "@/lib/pagination";
+import { decodeCursor, decodeHistory, nextLinkParams, prevLinkParams, backNPagesParams, START_CURSOR } from "@/lib/pagination";
 import brandModelsData from "@/lib/models.json";
+
+const PAGE_SIZE = 24;
+const SKIP_HOP = 5;
 
 export const metadata = {
   title: "Магазин — Кейсове.нет",
@@ -32,6 +35,8 @@ interface ShopSearchParams {
   model?: string;
   scale?: string;
   maxPrice?: string;
+  jump?: string;
+  skip?: string;
 }
 
 // If a free-text search (?q=) exactly names a known model — "S24 Ultra",
@@ -58,7 +63,7 @@ function detectModelFromQuery(q: string): { brand: string; model: string } | nul
   return null;
 }
 
-function buildLink(base: ShopSearchParams, overrides: { cursor: string; h: string }) {
+function buildLink(base: ShopSearchParams, overrides: { cursor: string; h: string }, extra?: Record<string, string>) {
   const params = new URLSearchParams();
   if (base.brand) params.set("brand", base.brand);
   if (base.category) params.set("category", base.category);
@@ -69,8 +74,29 @@ function buildLink(base: ShopSearchParams, overrides: { cursor: string; h: strin
   if (base.maxPrice) params.set("maxPrice", base.maxPrice);
   if (overrides.cursor && overrides.cursor !== "start") params.set("cursor", overrides.cursor);
   if (overrides.h) params.set("h", overrides.h);
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) params.set(key, value);
+  }
   const qs = params.toString();
   return `/shop${qs ? `?${qs}` : ""}`;
+}
+
+// Direct link to the true last page — cheap on the backend (flips the sort
+// order and takes+reverses, O(page-size) regardless of catalog size), but it
+// lands with no forward-history stack, so "Previous" from there falls back to
+// page 1 rather than stepping back precisely. Accepted trade-off: reaching
+// the last page any other way would require walking every page in between.
+function buildLastPageLink(base: ShopSearchParams) {
+  const params = new URLSearchParams();
+  if (base.brand) params.set("brand", base.brand);
+  if (base.category) params.set("category", base.category);
+  if (base.sort) params.set("sort", base.sort);
+  if (base.q) params.set("q", base.q);
+  if (base.model) params.set("model", base.model);
+  if (base.scale) params.set("scale", base.scale);
+  if (base.maxPrice) params.set("maxPrice", base.maxPrice);
+  params.set("jump", "last");
+  return `/shop?${params.toString()}`;
 }
 
 export default async function ShopPage({
@@ -92,6 +118,37 @@ export default async function ShopPage({
   }
 
   const history = decodeHistory(sp.h);
+  const maxPriceNum = sp.maxPrice ? parseInt(sp.maxPrice, 10) : undefined;
+
+  // Skip-several-forward (»): Convex cursors are opaque, so reaching a page
+  // several hops ahead means walking there hop-by-hop server-side first, then
+  // redirecting to the canonical cursor/history URL so the address bar, the
+  // browser back button, and refresh all keep working normally afterward.
+  // Bounded to SKIP_HOP (5) pages per click, so the extra fetches are cheap.
+  if (sp.skip) {
+    const skipN = Math.min(SKIP_HOP, Math.max(0, parseInt(sp.skip, 10) || 0));
+    let hist = [...history];
+    let token = sp.cursor;
+    for (let i = 0; i < skipN; i++) {
+      const res = await filterProducts({
+        brand: sp.brand,
+        category: sp.category,
+        sort: sp.sort,
+        q: sp.q,
+        scale: sp.scale,
+        model: sp.model,
+        maxPrice: maxPriceNum,
+        cursor: decodeCursor(token),
+        numItems: PAGE_SIZE,
+      });
+      if (res.isDone) break;
+      hist = [...hist, token ?? START_CURSOR];
+      token = res.continueCursor;
+    }
+    redirect(buildLink(sp, { cursor: token ?? START_CURSOR, h: hist.join(",") }));
+  }
+
+  const jumpToLast = sp.jump === "last";
   const currentPage = history.length + 1;
 
   const brand = sp.brand ? getBrand(sp.brand) : undefined;
@@ -109,7 +166,6 @@ export default async function ShopPage({
 
   // Load models statically from local JSON file
   const models = sp.brand ? ((brandModelsData as Record<string, string[]>)[sp.brand] || []) : [];
-  const maxPriceNum = sp.maxPrice ? parseInt(sp.maxPrice, 10) : undefined;
 
   let results: any[] = [];
   let totalCount: number | null = null;
@@ -126,12 +182,26 @@ export default async function ShopPage({
       model: sp.model,
       maxPrice: maxPriceNum,
       cursor: decodeCursor(sp.cursor),
-      numItems: 24,
+      numItems: PAGE_SIZE,
+      jumpToLastPage: jumpToLast || undefined,
     });
     results = res.products;
     totalCount = res.totalCount;
     isDone = res.isDone;
     continueCursor = res.continueCursor;
+  }
+
+  // Only meaningful when the backend knows the true row count (every filter
+  // combo except free-text keyword search, which Convex can't count cheaply).
+  const lastPage = totalCount !== null ? Math.max(1, Math.ceil(totalCount / PAGE_SIZE)) : null;
+  // A jumpToLastPage fetch intentionally resets history (see buildLastPageLink),
+  // so the page number to display has to come from the count, not from `history`.
+  const displayPage = jumpToLast && lastPage !== null ? lastPage : currentPage;
+
+  function pageLinkParams(targetPage: number) {
+    if (targetPage === displayPage) return { cursor: sp.cursor ?? START_CURSOR, h: sp.h ?? "" };
+    if (targetPage < displayPage) return backNPagesParams(history, displayPage, displayPage - targetPage);
+    return nextLinkParams(sp.cursor, history, continueCursor);
   }
 
   // formatModelDisplay already prefixes the brand name onto the model (e.g.
@@ -149,7 +219,7 @@ export default async function ShopPage({
       
       <h1 className="mb-1 font-heading text-3xl font-extrabold">{title}</h1>
       <p className="mb-6 text-sm text-text-muted">
-        {totalCount !== null ? `${totalCount} продукта · ` : ""}Страница {currentPage}
+        {totalCount !== null ? `${totalCount} продукта · ` : ""}Страница {displayPage}{lastPage !== null ? ` от ${lastPage}` : ""}
       </p>
 
       {/* Brand Selection Step (Category-first flow Step 1) */}
@@ -241,9 +311,19 @@ export default async function ShopPage({
                   ))}
                 </div>
 
-                {(currentPage > 1 || !isDone) && (
-                  <div className="mt-12 flex items-center justify-center gap-2">
-                    {currentPage > 1 ? (
+                {(displayPage > 1 || !isDone) && (
+                  <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
+                    {displayPage > SKIP_HOP && (
+                      <Link
+                        href={buildLink(sp, backNPagesParams(history, displayPage, SKIP_HOP))}
+                        title={`${SKIP_HOP} страници назад`}
+                        className="rounded-xl border border-border-c bg-surface px-3 py-2 text-sm font-semibold text-text hover:bg-surface-2 transition-colors"
+                      >
+                        «
+                      </Link>
+                    )}
+
+                    {displayPage > 1 ? (
                       <Link
                         href={buildLink(sp, prevLinkParams(history))}
                         className="rounded-xl border border-border-c bg-surface px-4 py-2 text-sm font-semibold text-text hover:bg-surface-2 transition-colors"
@@ -256,9 +336,57 @@ export default async function ShopPage({
                       </span>
                     )}
 
-                    <span className="text-sm font-bold text-text px-4">
-                      Страница {currentPage}
-                    </span>
+                    {lastPage !== null ? (
+                      <div className="flex items-center gap-2">
+                        {[1, ...(lastPage >= 2 ? [2] : [])].map((p) =>
+                          p === displayPage ? (
+                            <span key={p} className="rounded-xl gradient-brand px-4 py-2 text-sm font-bold text-white">
+                              {p}
+                            </span>
+                          ) : (
+                            <Link
+                              key={p}
+                              // Landing on the last page via jumpToLast wipes `history` (see
+                              // buildLastPageLink), so page 2 has no known cursor to jump back
+                              // to from there — walk forward one hop from page 1 instead.
+                              href={
+                                p === 2 && history.length === 0 && displayPage !== 1
+                                  ? buildLink(sp, { cursor: START_CURSOR, h: "" }, { skip: "1" })
+                                  : buildLink(sp, pageLinkParams(p))
+                              }
+                              className="rounded-xl border border-border-c bg-surface px-4 py-2 text-sm font-semibold text-text hover:bg-surface-2 transition-colors"
+                            >
+                              {p}
+                            </Link>
+                          )
+                        )}
+
+                        {lastPage > 3 && <span className="px-1 text-sm text-text-muted">…</span>}
+
+                        {lastPage > 2 &&
+                          (lastPage === displayPage ? (
+                            <span className="rounded-xl gradient-brand px-4 py-2 text-sm font-bold text-white">
+                              {lastPage}
+                            </span>
+                          ) : lastPage <= displayPage + 1 ? (
+                            <Link
+                              href={buildLink(sp, pageLinkParams(lastPage))}
+                              className="rounded-xl border border-border-c bg-surface px-4 py-2 text-sm font-semibold text-text hover:bg-surface-2 transition-colors"
+                            >
+                              {lastPage}
+                            </Link>
+                          ) : (
+                            <Link
+                              href={buildLastPageLink(sp)}
+                              className="rounded-xl border border-border-c bg-surface px-4 py-2 text-sm font-semibold text-text hover:bg-surface-2 transition-colors"
+                            >
+                              {lastPage}
+                            </Link>
+                          ))}
+                      </div>
+                    ) : (
+                      <span className="text-sm font-bold text-text px-4">Страница {displayPage}</span>
+                    )}
 
                     {!isDone ? (
                       <Link
@@ -271,6 +399,16 @@ export default async function ShopPage({
                       <span className="rounded-xl border border-border-c bg-surface-2 px-4 py-2 text-sm font-semibold text-text-muted cursor-not-allowed">
                         Следваща →
                       </span>
+                    )}
+
+                    {!isDone && lastPage !== null && displayPage + SKIP_HOP < lastPage && (
+                      <Link
+                        href={buildLink(sp, { cursor: sp.cursor ?? START_CURSOR, h: sp.h ?? "" }, { skip: String(SKIP_HOP) })}
+                        title={`${SKIP_HOP} страници напред`}
+                        className="rounded-xl border border-border-c bg-surface px-3 py-2 text-sm font-semibold text-text hover:bg-surface-2 transition-colors"
+                      >
+                        »
+                      </Link>
                     )}
                   </div>
                 )}
