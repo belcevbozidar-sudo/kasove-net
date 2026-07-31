@@ -16,6 +16,11 @@ export interface MenuCategory {
 // "<category> за <Brand>" filter link in the mega-menu.
 const CATEGORY_BRAND_SLUGS = ["apple", "samsung", "xiaomi", "huawei", "motorola", "honor", "nokia", "realme"];
 
+// Categories hidden from the nav menu (desktop mega-menu + mobile drawer) by
+// request, without touching the category or its products — still reachable
+// via /shop?category=<slug> directly, the shop sidebar filter, etc.
+const MENU_HIDDEN_CATEGORY_SLUGS = new Set<string>(["gsm-accessories"]);
+
 // Every entry here must resolve to a real, populated page — this data feeds
 // both the desktop "Категории" mega-menu and the mobile drawer accordion, so
 // a placeholder/fake entry shows up in two places at once. Derived from
@@ -36,7 +41,9 @@ export const categoryMenuData: MenuCategory[] = [
     slug: "new-products",
     href: "/new-products",
   },
-  ...categories.map((cat) => ({
+  ...categories
+    .filter((cat) => !MENU_HIDDEN_CATEGORY_SLUGS.has(cat.slug))
+    .map((cat) => ({
     name: cat.name.toUpperCase(),
     slug: cat.slug,
     href: `/shop?category=${cat.slug}`,

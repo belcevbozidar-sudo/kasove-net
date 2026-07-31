@@ -551,67 +551,6 @@ export default function Header() {
               </button>
             </div>
 
-            {/* Mobile Autocomplete Search */}
-            <div className="relative mb-6">
-              <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-full border border-border-c bg-surface-2 px-4 py-2.5">
-                <button type="submit" aria-label="Търси" className="relative z-50 shrink-0">
-                  <SearchIcon className="w-4 h-4 text-text-muted" />
-                </button>
-                <input
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setShowDropdown(true);
-                  }}
-                  onFocus={() => setShowDropdown(true)}
-                  type="text"
-                  placeholder="Търси..."
-                  className="w-full bg-transparent text-base outline-none placeholder:text-text-muted text-text"
-                />
-              </form>
-
-              {showDropdown && query.trim().length >= 2 && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
-                  <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl border border-border-c bg-bg p-2.5 shadow-2xl max-h-[300px] overflow-y-auto">
-                    {searchResult === undefined ? (
-                      <div className="p-4 text-center text-xs text-text-muted">Търсене...</div>
-                    ) : suggestions.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-text-muted">Няма намерени предложения</div>
-                    ) : (
-                      <div className="space-y-1">
-                        {suggestions.map((p: any) => (
-                          <Link
-                            key={p.slug}
-                            href={`/product/${p.slug}`}
-                            onClick={() => {
-                              setShowDropdown(false);
-                              setMobileOpen(false);
-                              setQuery("");
-                            }}
-                            className="flex items-center gap-3 rounded-xl p-2 hover:bg-surface transition-colors text-left"
-                          >
-                            <div className="h-9 w-9 shrink-0 rounded-lg bg-surface-2 overflow-hidden flex items-center justify-center border border-border-c">
-                              <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-text truncate">{p.name}</p>
-                              <p className="text-[9px] text-text-muted uppercase tracking-wider">
-                                {formatModelDisplay(p.brand, p.model)}
-                              </p>
-                            </div>
-                            <span className="text-xs font-bold text-accent-lime shrink-0">
-                              {formatPrice(p.price)}
-                            </span>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-
             {/* Марки — pinned to the very top of the drawer, above even the
                 shortcuts, per explicit request. Same per-brand model
                 dropdowns as the desktop nav bar, one-to-one: every model
@@ -707,11 +646,28 @@ export default function Header() {
               </li>
             </ul>
 
-            {/* Категории — mirrors the desktop "Категории" mega-menu 1:1:
-                every real accessory category as a collapsible row, full
-                subcategory list shown on expand (never truncated). */}
+            {/* Аксесоари (formerly "Категории") — mirrors the desktop
+                "Категории" mega-menu 1:1: every real accessory category as a
+                collapsible row, full subcategory list shown on expand (never
+                truncated). Collapsed by default; the whole header row
+                (label or arrow) toggles it, not just the arrow. */}
             <div className="mb-5 border-t border-border-c pt-4">
-              <p className="mb-2 text-base font-extrabold uppercase tracking-wide gradient-text">Категории</p>
+              <button
+                type="button"
+                onClick={() => toggleMobileExpanded("accessories-section")}
+                className="mb-2 flex w-full items-center justify-between rounded-lg px-2 py-2 text-base font-extrabold uppercase tracking-wide transition-opacity hover:opacity-80"
+              >
+                <span className="gradient-text">Аксесоари</span>
+                <svg
+                  className={`w-4 h-4 text-text-muted transition-transform ${mobileExpanded.has("accessories-section") ? "rotate-180" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {mobileExpanded.has("accessories-section") && (
               <ul className="space-y-1">
                 {categoryMenuData
                   .filter((cat) => cat.slug !== "brands" && cat.slug !== "new-products" && cat.slug !== "toys")
@@ -745,6 +701,7 @@ export default function Header() {
                     );
                   })}
               </ul>
+              )}
             </div>
 
             <ul className="space-y-1 border-t border-border-c pt-4 text-sm text-text-muted">
