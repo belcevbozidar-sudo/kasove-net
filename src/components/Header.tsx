@@ -691,7 +691,7 @@ export default function Header() {
                 <Link
                   href="/new-products"
                   onClick={() => setMobileOpen(false)}
-                  className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
+                  className="block rounded-lg px-2 py-2 text-base font-extrabold uppercase tracking-wide gradient-text transition-opacity hover:opacity-80"
                 >
                   Нови продукти
                 </Link>
@@ -700,7 +700,7 @@ export default function Header() {
                 <Link
                   href="/shop?category=toys"
                   onClick={() => setMobileOpen(false)}
-                  className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
+                  className="block rounded-lg px-2 py-2 text-base font-extrabold uppercase tracking-wide gradient-text transition-opacity hover:opacity-80"
                 >
                   Метални колички
                 </Link>
@@ -711,7 +711,7 @@ export default function Header() {
                 every real accessory category as a collapsible row, full
                 subcategory list shown on expand (never truncated). */}
             <div className="mb-5 border-t border-border-c pt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Категории</p>
+              <p className="mb-2 text-base font-extrabold uppercase tracking-wide gradient-text">Категории</p>
               <ul className="space-y-1">
                 {categoryMenuData
                   .filter((cat) => cat.slug !== "brands" && cat.slug !== "new-products" && cat.slug !== "toys")

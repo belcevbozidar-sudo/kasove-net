@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { categories, brands, NON_PHONE_CATEGORIES } from "@/lib/data";
+import { categories, brands, NON_PHONE_CATEGORIES, HOMEPAGE_CATEGORY_SLUGS } from "@/lib/data";
 import { formatModelDisplay } from "@/lib/format-model";
 import brandModelsData from "@/lib/models.json";
 
@@ -70,6 +70,7 @@ export default function CategoryLinks() {
       {/* Grid Container for Categories (2 rows of 3) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {categories
+          .filter((c) => HOMEPAGE_CATEGORY_SLUGS.has(c.slug))
           .map((c) => (
             <div
               key={c.slug}

@@ -53,8 +53,36 @@ export const categories: Category[] = [
   { slug: "usb-cables", name: "USB кабели", shortName: "Кабели", icon: "cable" },
   { slug: "car-stands", name: "Стойки за кола", shortName: "Стойки кола", icon: "stand" },
   { slug: "bluetooth-headphones", name: "Блутут слушалки", shortName: "Слушалки", icon: "case" },
+  { slug: "handsfree", name: "Handsfree слушалки", shortName: "Handsfree", icon: "case" },
+  { slug: "other", name: "Разни продукти", shortName: "Разни", icon: "case" },
+  { slug: "batteries", name: "Батерии", shortName: "Батерии", icon: "bolt" },
+  { slug: "chargers-12v", name: "Зарядни 12V за кола", shortName: "Зарядни 12V", icon: "bolt" },
+  { slug: "powerbanks", name: "Външни батерии", shortName: "Power Bank", icon: "bolt" },
+  { slug: "tablet-cases", name: "Калъфи за таблети", shortName: "Таблети", icon: "case" },
+  { slug: "smart-devices", name: "Смарт устройства", shortName: "Смарт", icon: "case" },
+  { slug: "universal-cases", name: "Универсални калъфи", shortName: "Универсални", icon: "case" },
+  { slug: "apple-accessories", name: "Аксесоари за Apple", shortName: "Apple", icon: "case" },
+  { slug: "gsm-accessories", name: "GSM аксесоари", shortName: "GSM", icon: "case" },
+  { slug: "memory-cards", name: "Карти памет", shortName: "Карти памет", icon: "cable" },
   { slug: "toys", name: "Метални колички", shortName: "Колички", icon: "case" },
 ];
+
+// The homepage "Пазарувай по категория" tile grid only shows the original 9
+// categories (each needs a hero image at /images/categories/<slug>.webp) —
+// the 11 restored below don't have one yet, so keep them off that grid for
+// now while still making them real, filterable categories everywhere else
+// (shop sidebar, header/mobile menu).
+export const HOMEPAGE_CATEGORY_SLUGS = new Set<string>([
+  "silicone-cases",
+  "hard-cases",
+  "leather-cases",
+  "protectors",
+  "chargers-220v",
+  "usb-cables",
+  "car-stands",
+  "bluetooth-headphones",
+  "toys",
+]);
 
 // Categories that aren't phone accessories: the shop's brand/model wizard must
 // be skipped for these, since their products aren't tied to a phone model.
