@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import SidebarFilters from "@/components/SidebarFilters";
 import ProductCard from "@/components/ProductCard";
 import BrandModelSelector from "@/components/BrandModelSelector";
@@ -33,6 +34,30 @@ interface ShopSearchParams {
   maxPrice?: string;
 }
 
+// If a free-text search (?q=) exactly names a known model — "S24 Ultra",
+// "Samsung S24 Ultra", "iPhone 17 Pro Max" — treat it as if that model had
+// been picked from the wizard instead of running a fuzzy name search: exact
+// results from the model index, and the page (title, sidebar, wizard-skip)
+// behaves exactly like the real model-filtered view.
+function detectModelFromQuery(q: string): { brand: string; model: string } | null {
+  const trimmed = q.trim();
+  if (!trimmed) return null;
+  const lower = trimmed.toLowerCase();
+  const modelsData = brandModelsData as Record<string, string[]>;
+
+  for (const brand of Object.keys(modelsData)) {
+    if (!lower.startsWith(brand.toLowerCase() + " ")) continue;
+    const rest = trimmed.slice(brand.length).trim();
+    const match = modelsData[brand].find((m) => m.toLowerCase() === rest.toLowerCase());
+    if (match) return { brand, model: match };
+  }
+  for (const brand of Object.keys(modelsData)) {
+    const match = modelsData[brand].find((m) => m.toLowerCase() === lower);
+    if (match) return { brand, model: match };
+  }
+  return null;
+}
+
 function buildLink(base: ShopSearchParams, overrides: { cursor: string; h: string }) {
   const params = new URLSearchParams();
   if (base.brand) params.set("brand", base.brand);
@@ -54,6 +79,18 @@ export default async function ShopPage({
   searchParams: Promise<ShopSearchParams>;
 }) {
   const sp = await searchParams;
+
+  if (sp.q && !sp.model) {
+    const detected = detectModelFromQuery(sp.q);
+    if (detected) {
+      const params = new URLSearchParams();
+      params.set("brand", detected.brand);
+      params.set("model", detected.model);
+      if (sp.category) params.set("category", sp.category);
+      redirect(`/shop?${params.toString()}`);
+    }
+  }
+
   const history = decodeHistory(sp.h);
   const currentPage = history.length + 1;
 
