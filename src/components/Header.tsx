@@ -70,7 +70,9 @@ export default function Header() {
             {/* Desktop Autocomplete Search */}
             <div className="relative mx-8 hidden flex-1 lg:block">
               <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-full border border-border-c bg-surface px-4 py-2.5">
-                <SearchIcon className="w-4 h-4 text-text-muted" />
+                <button type="submit" aria-label="Търси" className="relative z-50 shrink-0">
+                  <SearchIcon className="w-4 h-4 text-text-muted" />
+                </button>
                 <input
                   value={query}
                   onChange={(e) => {
@@ -169,7 +171,9 @@ export default function Header() {
                 }}
                 className="flex items-center gap-2 rounded-full border border-border-c bg-surface-2 px-4 py-2.5"
               >
-                <SearchIcon className="w-4 h-4 text-text-muted" />
+                <button type="submit" aria-label="Търси" className="relative z-50 shrink-0">
+                  <SearchIcon className="w-4 h-4 text-text-muted" />
+                </button>
                 <input
                   autoFocus
                   value={query}
@@ -503,7 +507,9 @@ export default function Header() {
             {/* Mobile Autocomplete Search */}
             <div className="relative mb-6">
               <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-full border border-border-c bg-surface-2 px-4 py-2.5">
-                <SearchIcon className="w-4 h-4 text-text-muted" />
+                <button type="submit" aria-label="Търси" className="relative z-50 shrink-0">
+                  <SearchIcon className="w-4 h-4 text-text-muted" />
+                </button>
                 <input
                   value={query}
                   onChange={(e) => {
