@@ -95,20 +95,25 @@ async function trySkuSearch(
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
+    // .first() rather than .unique(): historic imports left a handful of
+    // duplicate slugs in the table, and .unique() turns each of those product
+    // pages into a 500 for visitors. Serving the oldest match keeps the page
+    // up; the duplicates themselves get repaired by scripts/fix-duplicate-slugs.
     return await ctx.db
       .query("products")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
-      .unique();
+      .first();
   },
 });
 
 export const getBySourceId = query({
   args: { sourceId: v.string() },
   handler: async (ctx, { sourceId }) => {
+    // .first() for the same reason as getBySlug above.
     return await ctx.db
       .query("products")
       .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
-      .unique();
+      .first();
   },
 });
 
@@ -1080,6 +1085,23 @@ export const listForMigration = query({
     return await ctx.db
       .query("products")
       .paginate({ cursor, numItems: limit });
+  },
+});
+
+// Narrow slug-only patch used by scripts/fix-duplicate-slugs.js — refuses to
+// create a new collision, so it can only reduce the duplicate count.
+export const adminSetSlug = mutation({
+  args: { adminSecret: v.string(), id: v.id("products"), slug: v.string() },
+  handler: async (ctx, { adminSecret, id, slug }) => {
+    assertAdmin(adminSecret);
+    const clash = await ctx.db
+      .query("products")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .first();
+    if (clash && clash._id !== id) {
+      throw new Error(`Slug already in use by ${clash._id}: ${slug}`);
+    }
+    await ctx.db.patch(id, { slug });
   },
 });
 
