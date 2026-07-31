@@ -141,13 +141,18 @@ export async function getBundleProducts(product: Product): Promise<Product[]> {
     if (!cleanedCaseModel) return [];
 
     // Word *set* of the case's model (e.g. "S24 Ultra" -> {s24, ultra}),
-    // with the 5G/4G connectivity tag ignored since it's not a distinct
-    // model as far as case/protector fit is concerned.
+    // ignoring the 5G/4G connectivity tag and the "Galaxy" filler word —
+    // neither is a distinct model as far as case/protector fit is concerned,
+    // but the same phone is stored under both "Samsung S24 Ultra" and
+    // "Samsung Galaxy S24 Ultra" depending on import batch. Without dropping
+    // "galaxy" here, cleanModelName("Samsung Galaxy X") keeps "Galaxy X" (2
+    // words) which can never word-set-equal cleanModelName("Samsung X")'s
+    // "X" (1 word) — silently hiding half the real matches.
     const caseWords = new Set(
       cleanedCaseModel
         .toLowerCase()
         .split(/\s+/)
-        .filter((w) => w.length > 0 && w !== "5g" && w !== "4g")
+        .filter((w) => w.length > 0 && w !== "5g" && w !== "4g" && w !== "galaxy")
     );
 
     // Fetch every protector for this brand — a single capped page (previously
@@ -183,7 +188,7 @@ export async function getBundleProducts(product: Product): Promise<Product[]> {
         const words = cleaned
           .toLowerCase()
           .split(/\s+/)
-          .filter((w) => w.length > 0 && w !== "5g" && w !== "4g");
+          .filter((w) => w.length > 0 && w !== "5g" && w !== "4g" && w !== "galaxy");
         return words.length > 0 ? new Set(words) : null;
       }
 
