@@ -44,6 +44,16 @@ export default function CategoryLinks() {
   };
 
   const handleFinishFlow = () => {
+    // "Универсален" products (screen protectors, chargers, cases, ... not
+    // tied to any single phone brand) have no meaningful model to pick, same
+    // as the "Други" brand — go straight to the category+brand listing.
+    if (selectedCategory && selectedBrand === "universal") {
+      router.push(`/shop?brand=universal&category=${selectedCategory}`);
+      setSelectedCategory(null);
+      setSelectedBrand(null);
+      setSelectedModel("");
+      return;
+    }
     if (selectedCategory && selectedBrand && selectedModel) {
       // Redirect to the shop with filters applied
       router.push(`/shop?brand=${selectedBrand}&model=${encodeURIComponent(selectedModel)}&category=${selectedCategory}`);
@@ -155,11 +165,27 @@ export default function CategoryLinks() {
                       {b.name}
                     </button>
                   ))}
+                {/* Универсални — many products in these categories (screen
+                    protectors, chargers, cases, power banks, ...) aren't tied
+                    to any single phone brand; without this option they were
+                    unreachable no matter which real brand a visitor picked. */}
+                <button
+                  onClick={() => setSelectedBrand("universal")}
+                  className={`rounded-xl border p-3 text-xs font-semibold text-center transition-all ${
+                    selectedBrand === "universal"
+                      ? "border-accent bg-accent/10 text-accent font-bold"
+                      : "border-border-c bg-surface-2 hover:border-text-muted text-text-muted hover:text-text"
+                  }`}
+                >
+                  Универсални
+                </button>
               </div>
             </div>
 
-            {/* Step 2: Select Model (Dropdown) */}
-            {selectedBrand && (
+            {/* Step 2: Select Model (Dropdown) — skipped for "Универсални",
+                same as the "Други" brand: those products aren't tied to a
+                phone model. */}
+            {selectedBrand && selectedBrand !== "universal" && (
               <div className="mt-6 text-left animate-fade-up">
                 <label htmlFor="model-select" className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
                   2. Изберете Модел телефон
@@ -193,7 +219,7 @@ export default function CategoryLinks() {
                 Отказ
               </button>
               <button
-                disabled={!selectedCategory || !selectedBrand || !selectedModel}
+                disabled={!selectedCategory || !selectedBrand || (selectedBrand !== "universal" && !selectedModel)}
                 onClick={handleFinishFlow}
                 className="rounded-full gradient-brand px-6 py-2.5 text-xs font-bold text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
