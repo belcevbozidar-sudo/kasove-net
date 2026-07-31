@@ -1,10 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { brands, categories, formatPrice } from "@/lib/data";
-import { saveProduct, deleteProduct, adminLogout } from "./actions";
+import {
+  saveProduct,
+  deleteProduct,
+  adminLogout,
+  fetchOrders,
+  setOrderStatus,
+  fetchNextSku,
+  addSlide,
+  updateSlide,
+  removeSlide,
+  seedSlides,
+} from "./actions";
 import type { Product } from "@/lib/types";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
 interface AdminDashboardProps {
@@ -18,21 +29,32 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   const [filterBrand, setFilterBrand] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
 
-  // Slide list from Convex
+  // Slide list stays a live public query — the hero slides are shown on the
+  // storefront anyway. Everything that *writes*, plus anything holding
+  // customer data, goes through session-checked server actions instead, so
+  // the Convex admin secret never reaches the browser.
   const slides = useQuery(api.slides.list) || [];
 
-  // Slide Mutations
-  const addSlideMutation = useMutation(api.slides.add);
-  const updateSlideMutation = useMutation(api.slides.update);
-  const deleteSlideMutation = useMutation(api.slides.deleteSlide);
-  const seedSlidesMutation = useMutation(api.slides.seed);
-
-  // Orders
-  const orders = useQuery(api.orders.getOrders) || [];
-  const updateOrderStatusMutation = useMutation(api.orders.updateOrderStatus);
+  // Orders (customer PII) — loaded server-side, refreshed after each change.
+  const [orders, setOrders] = useState<any[]>([]);
+  const reloadOrders = useCallback(async () => {
+    try {
+      setOrders(await fetchOrders());
+    } catch (err) {
+      console.error("Failed to load orders:", err);
+    }
+  }, []);
+  useEffect(() => {
+    reloadOrders();
+  }, [reloadOrders]);
 
   // Suggested next article number for a brand-new product (still editable)
-  const nextSkuSuggestion = useQuery(api.products.getNextSku);
+  const [nextSkuSuggestion, setNextSkuSuggestion] = useState<string | null>(null);
+  useEffect(() => {
+    fetchNextSku()
+      .then(setNextSkuSuggestion)
+      .catch((err) => console.error("Failed to load next SKU:", err));
+  }, []);
 
   // Product Form state
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -196,7 +218,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   const handleDeleteSlide = async (id: any) => {
     if (!confirm("Сигурни ли сте, че искате да изтриете този слайдер?")) return;
     try {
-      await deleteSlideMutation({ id });
+      await removeSlide(id);
       setSuccess("Слайдерът е изтрит успешно.");
       setTimeout(() => setSuccess(""), 4000);
     } catch (err: any) {
@@ -207,7 +229,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
   const handleResetSlides = async () => {
     if (!confirm("Внимание! Това ще изтрие всички потребителски слайдери и ще възстанови началните 3 слайдера на сайта. Желаете ли да продължите?")) return;
     try {
-      await seedSlidesMutation({});
+      await seedSlides();
       setSuccess("Слайдерите са възстановени успешно.");
       setTimeout(() => setSuccess(""), 4000);
     } catch (err: any) {
@@ -222,9 +244,11 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
     setSuccess("");
 
     try {
-      if (editingSlide) {
-        await updateSlideMutation({
-          id: editingSlide._id,
+      // slides.list falls back to hardcoded DEFAULT_SLIDES while the table is
+      // empty; those have no _id, so editing one has to insert it as a real
+      // slide rather than patch a document that doesn't exist yet.
+      if (editingSlide && editingSlide._id) {
+        await updateSlide(editingSlide._id, {
           image: slideImage,
           eyebrow: slideEyebrow,
           title: slideTitle,
@@ -235,7 +259,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
         });
         setSuccess("Слайдерът е обновен успешно.");
       } else {
-        await addSlideMutation({
+        await addSlide({
           image: slideImage,
           eyebrow: slideEyebrow,
           title: slideTitle,
@@ -585,7 +609,7 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
                         <td className="px-4 py-3">
                           <select
                             value={o.status}
-                            onChange={(e) => updateOrderStatusMutation({ orderId: o._id, status: e.target.value })}
+                            onChange={async (e) => { await setOrderStatus(o._id, e.target.value); reloadOrders(); }}
                             className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-800"
                           >
                             <option value="нова">нова</option>
@@ -628,7 +652,8 @@ export default function AdminDashboard({ initialProducts }: AdminDashboardProps)
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {slides.map((s: any) => (
-                  <div key={s._id} className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden flex flex-col">
+                  // DEFAULT_SLIDES (shown while the table is empty) have no _id
+                  <div key={s._id ?? `default-${s.order}`} className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden flex flex-col">
                     <div className="h-44 relative bg-slate-100 flex items-center justify-center border-b border-slate-100">
                       <img src={s.image} alt={s.title} className="w-full h-full object-cover" />
                       <span className="absolute top-2 left-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">

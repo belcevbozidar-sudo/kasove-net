@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
-import { formatPrice, FREE_SHIPPING_THRESHOLD, DEFAULT_SHIPPING_FEE } from "@/lib/data";
+import { formatPrice, FREE_SHIPPING_THRESHOLD, shippingFor } from "@/lib/data";
 import { MinusIcon, PlusIcon, TrashIcon, CartIcon } from "@/components/Icons";
 import { groupCartLines } from "@/lib/cart-grouping";
 import ProductRail from "@/components/ProductRail";
@@ -16,7 +16,7 @@ export default function CartPage() {
   const [promoMsg, setPromoMsg] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
 
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : DEFAULT_SHIPPING_FEE;
+  const shipping = shippingFor(subtotal);
   const total = subtotal + shipping;
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
 

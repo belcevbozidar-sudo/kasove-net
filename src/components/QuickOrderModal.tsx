@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { formatPrice } from "@/lib/data";
+import { formatPrice, shippingFor } from "@/lib/data";
 import type { Product } from "@/lib/types";
 import { CloseIcon } from "./Icons";
 
@@ -28,6 +28,8 @@ export default function QuickOrderModal({
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   if (!open) return null;
+
+  const shipping = shippingFor(product.price);
 
   function handleClose() {
     setOrderNumber(null);
@@ -56,8 +58,8 @@ export default function QuickOrderModal({
           },
         ],
         subtotal: product.price,
-        shipping: 0,
-        total: product.price,
+        shipping,
+        total: product.price + shipping,
       });
       setOrderNumber(result.orderNumber);
     } catch {
@@ -101,6 +103,17 @@ export default function QuickOrderModal({
               <div className="min-w-0">
                 <p className="text-sm font-semibold leading-snug line-clamp-2">{product.name}</p>
                 <p className="mt-0.5 text-sm font-bold text-accent">{formatPrice(product.price)}</p>
+              </div>
+            </div>
+
+            <div className="mb-4 space-y-1 rounded-2xl border border-border-c px-3 py-2.5 text-sm">
+              <div className="flex justify-between text-text-muted">
+                <span>Доставка</span>
+                <span>{shipping === 0 ? "Безплатна" : formatPrice(shipping)}</span>
+              </div>
+              <div className="flex justify-between font-bold">
+                <span>Общо</span>
+                <span>{formatPrice(product.price + shipping)}</span>
               </div>
             </div>
 

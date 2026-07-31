@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { brands, allBrands, formatPrice } from "@/lib/data";
+import { brands, allBrands, formatPrice, FREE_SHIPPING_THRESHOLD_BGN } from "@/lib/data";
 import { formatModelDisplay } from "@/lib/format-model";
 import { useCart } from "@/lib/cart-context";
 import { CartIcon, CloseIcon, MenuIcon, SearchIcon } from "./Icons";
@@ -49,7 +49,7 @@ export default function Header() {
       <div className="sticky top-0 z-50">
         <div className="gradient-brand text-white">
           <p className="mx-auto max-w-7xl container-p py-2 text-center text-[11px] sm:text-xs font-medium">
-            Безплатна доставка над 60&nbsp;лв. · Купи калъф&nbsp;+&nbsp;протектор в бъндел и спести до 20%
+            Безплатна доставка над {FREE_SHIPPING_THRESHOLD_BGN}&nbsp;лв. · Купи калъф&nbsp;+&nbsp;протектор в бъндел и спести до 20%
           </p>
         </div>
 

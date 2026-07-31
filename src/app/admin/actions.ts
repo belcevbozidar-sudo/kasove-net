@@ -25,6 +25,40 @@ function getSecretKey(): Buffer {
   return crypto.scryptSync(getAdminPassword(), "salt", 32);
 }
 
+// Shared secret that authorizes the admin/maintenance Convex functions (see
+// convex/adminAuth.ts). Server-side only — it must never reach the browser,
+// which is why every admin Convex call goes through a server action here
+// rather than through useQuery/useMutation in the dashboard component.
+function getConvexAdminSecret(): string {
+  const secret = process.env.ADMIN_API_SECRET;
+  if (!secret) {
+    throw new Error("ADMIN_API_SECRET environment variable is not configured.");
+  }
+  return secret;
+}
+
+
+/** Runs an admin Convex call, keeping its raw error off the client.
+ *  Convex echoes the whole argument object back in validation errors — which
+ *  includes adminSecret — so the raw message must never be surfaced to the
+ *  browser, even inside the authenticated admin panel. */
+async function convexAdminCall<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    console.error(`Admin Convex call failed (${label}):`, err);
+    throw new Error(`Операцията не бе изпълнена (${label}). Виж сървърния лог за подробности.`);
+  }
+}
+
+/** Every admin data operation must prove there's a valid session cookie
+ *  before it is allowed to use the Convex admin secret. */
+async function requireSession() {
+  const hasSession = await checkAdminSession();
+  if (!hasSession) throw new Error("Unauthorized");
+  return getConvexAdminSecret();
+}
+
 function encryptSession(data: string): string {
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, getSecretKey(), iv);
@@ -80,7 +114,7 @@ export async function adminLogin(password: string, rememberMe: boolean) {
   const ip = await getClientIp();
 
   // Check lockout status in Convex
-  const lockout = await fetchQuery(api.products.getLockout, { ip });
+  const lockout = await convexAdminCall("getLockout", () => fetchQuery(api.products.getLockout, { ip, adminSecret: getConvexAdminSecret() }));
   if (lockout.locked) {
     const timeLeft = Math.ceil(((lockout.lockoutUntil || 0) - Date.now()) / (60 * 1000));
     return {
@@ -98,7 +132,7 @@ export async function adminLogin(password: string, rememberMe: boolean) {
   }
   if (password === adminPassword) {
     // Reset login failures on success
-    await fetchMutation(api.products.resetLoginAttempts, { ip });
+    await convexAdminCall("resetLoginAttempts", () => fetchMutation(api.products.resetLoginAttempts, { ip, adminSecret: getConvexAdminSecret() }));
 
     const sessionDuration = rememberMe ? 14 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 2 weeks vs 1 day
     const expires = Date.now() + sessionDuration;
@@ -116,7 +150,7 @@ export async function adminLogin(password: string, rememberMe: boolean) {
     return { success: true };
   } else {
     // Record login failure
-    const failure = await fetchMutation(api.products.recordLoginFailure, { ip });
+    const failure = await convexAdminCall("recordLoginFailure", () => fetchMutation(api.products.recordLoginFailure, { ip, adminSecret: getConvexAdminSecret() }));
     const remaining = Math.max(0, 3 - failure.attempts);
 
     if (failure.locked) {
@@ -176,8 +210,7 @@ export async function saveProduct(data: {
   inStock?: boolean;
   sku?: string;
 }) {
-  const hasSession = await checkAdminSession();
-  if (!hasSession) throw new Error("Unauthorized");
+  const adminSecret = await requireSession();
 
   if (!data.name || !data.brand || !data.category || data.price <= 0) {
     return { success: false, error: "Моля попълнете всички задължителни полета." };
@@ -186,7 +219,8 @@ export async function saveProduct(data: {
   try {
     if (data.id) {
       // Update
-      await fetchMutation(api.products.adminUpdateProduct, {
+      await convexAdminCall("updateProduct", () => fetchMutation(api.products.adminUpdateProduct, {
+        adminSecret,
         id: data.id as any,
         name: data.name,
         brand: data.brand,
@@ -200,10 +234,11 @@ export async function saveProduct(data: {
         badge: data.badge || undefined,
         inStock: data.inStock,
         sku: data.sku,
-      });
+      }));
     } else {
       // Add
-      await fetchMutation(api.products.adminAddProduct, {
+      await convexAdminCall("addProduct", () => fetchMutation(api.products.adminAddProduct, {
+        adminSecret,
         name: data.name,
         brand: data.brand,
         model: data.model,
@@ -216,7 +251,7 @@ export async function saveProduct(data: {
         badge: data.badge || undefined,
         inStock: data.inStock,
         sku: data.sku,
-      });
+      }));
     }
     return { success: true };
   } catch (error: any) {
@@ -226,14 +261,79 @@ export async function saveProduct(data: {
 }
 
 export async function deleteProduct(id: string) {
-  const hasSession = await checkAdminSession();
-  if (!hasSession) throw new Error("Unauthorized");
+  const adminSecret = await requireSession();
 
   try {
-    await fetchMutation(api.products.adminDeleteProduct, { id: id as any });
+    await convexAdminCall("deleteProduct", () => fetchMutation(api.products.adminDeleteProduct, { adminSecret, id: id as any }));
     return { success: true };
   } catch (error: any) {
     console.error("Failed to delete product:", error);
     return { success: false, error: error.message || "Неуспешно изтриване на продукта." };
   }
+}
+
+// --- orders -----------------------------------------------------------------
+// These used to be called straight from the dashboard with useQuery/useMutation,
+// which meant the underlying Convex functions had to be public — and a public
+// `getOrders` let anyone on the internet dump every customer's name, phone and
+// address. They now run server-side behind the session check.
+
+export async function fetchOrders() {
+  const adminSecret = await requireSession();
+  return await convexAdminCall("getOrders", () => fetchQuery(api.orders.getOrders, { adminSecret }));
+}
+
+export async function setOrderStatus(orderId: string, status: string) {
+  const adminSecret = await requireSession();
+  await convexAdminCall("updateOrderStatus", () => fetchMutation(api.orders.updateOrderStatus, { adminSecret, orderId: orderId as any, status }));
+  return { success: true };
+}
+
+export async function removeOrder(orderId: string) {
+  const adminSecret = await requireSession();
+  await convexAdminCall("deleteOrder", () => fetchMutation(api.orders.deleteOrder, { adminSecret, orderId: orderId as any }));
+  return { success: true };
+}
+
+// --- product helpers --------------------------------------------------------
+
+export async function fetchNextSku() {
+  const adminSecret = await requireSession();
+  return await convexAdminCall("getNextSku", () => fetchQuery(api.products.getNextSku, { adminSecret }));
+}
+
+// --- hero slides ------------------------------------------------------------
+
+type SlideInput = {
+  image: string;
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaHref: string;
+  order: number;
+};
+
+export async function addSlide(data: SlideInput) {
+  const adminSecret = await requireSession();
+  await convexAdminCall("addSlide", () => fetchMutation(api.slides.add, { adminSecret, ...data }));
+  return { success: true };
+}
+
+export async function updateSlide(id: string, data: SlideInput) {
+  const adminSecret = await requireSession();
+  await convexAdminCall("updateSlide", () => fetchMutation(api.slides.update, { adminSecret, id: id as any, ...data }));
+  return { success: true };
+}
+
+export async function removeSlide(id: string) {
+  const adminSecret = await requireSession();
+  await convexAdminCall("removeSlide", () => fetchMutation(api.slides.deleteSlide, { adminSecret, id: id as any }));
+  return { success: true };
+}
+
+export async function seedSlides() {
+  const adminSecret = await requireSession();
+  await convexAdminCall("seedSlides", () => fetchMutation(api.slides.seed, { adminSecret }));
+  return { success: true };
 }

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useCart } from "@/lib/cart-context";
-import { formatPrice, FREE_SHIPPING_THRESHOLD, DEFAULT_SHIPPING_FEE } from "@/lib/data";
+import { formatPrice, shippingFor } from "@/lib/data";
 import { groupCartLines } from "@/lib/cart-grouping";
 import { LockIcon } from "@/components/Icons";
 
@@ -21,7 +21,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const entries = groupCartLines(lines);
 
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : DEFAULT_SHIPPING_FEE;
+  const shipping = shippingFor(subtotal);
   const total = subtotal + shipping;
 
   if (lines.length === 0 && !submitting) {

@@ -3,6 +3,7 @@ import { query, mutation, action } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import type { Doc } from "./_generated/dataModel";
 import { api } from "./_generated/api";
+import { assertAdmin } from "./adminAuth";
 
 const SORTS = v.optional(
   v.union(
@@ -505,9 +506,11 @@ export const getModels = query({
 
 export const recategorizeBySourceId = mutation({
   args: {
+    adminSecret: v.string(),
     updates: v.array(v.object({ sourceId: v.string(), category: v.string() })),
   },
-  handler: async (ctx, { updates }) => {
+  handler: async (ctx, { adminSecret, updates }) => {
+    assertAdmin(adminSecret);
     let updatedCount = 0;
     let notFoundCount = 0;
     for (const { sourceId, category } of updates) {
@@ -530,6 +533,7 @@ export const recategorizeBySourceId = mutation({
 
 export const insertProducts = mutation({
   args: {
+    adminSecret: v.string(),
     products: v.array(
       v.object({
         sourceId: v.string(),
@@ -547,10 +551,13 @@ export const insertProducts = mutation({
         reviewCount: v.number(),
         description: v.string(),
         features: v.array(v.string()),
+        inStock: v.optional(v.boolean()),
+        sku: v.optional(v.string()),
       })
     ),
   },
-  handler: async (ctx, { products }) => {
+  handler: async (ctx, { adminSecret, products }) => {
+    assertAdmin(adminSecret);
     let insertedCount = 0;
     let skippedCount = 0;
     for (const p of products) {
@@ -570,8 +577,9 @@ export const insertProducts = mutation({
 });
 
 export const cleanAllProductImages = mutation({
-  args: { cursor: v.optional(v.string()), limit: v.number() },
-  handler: async (ctx, { cursor, limit }) => {
+  args: { adminSecret: v.string(), cursor: v.optional(v.string()), limit: v.number() },
+  handler: async (ctx, { adminSecret, cursor, limit }) => {
+    assertAdmin(adminSecret);
     const cleanUrl = (url: string) => {
       return url.replace(/\/styles\/[^\/]+\/public\//, "/");
     };
@@ -661,8 +669,9 @@ async function adjustFacetCount(db: any, category: string, brand: string, amount
 }
 
 export const getLockout = query({
-  args: { ip: v.string() },
-  handler: async (ctx, { ip }) => {
+  args: { adminSecret: v.string(), ip: v.string() },
+  handler: async (ctx, { adminSecret, ip }) => {
+    assertAdmin(adminSecret);
     const attempt = await ctx.db
       .query("loginAttempts")
       .withIndex("by_ip", (q) => q.eq("ip", ip))
@@ -685,8 +694,9 @@ export const getLockout = query({
 });
 
 export const recordLoginFailure = mutation({
-  args: { ip: v.string() },
-  handler: async (ctx, { ip }) => {
+  args: { adminSecret: v.string(), ip: v.string() },
+  handler: async (ctx, { adminSecret, ip }) => {
+    assertAdmin(adminSecret);
     const attempt = await ctx.db
       .query("loginAttempts")
       .withIndex("by_ip", (q) => q.eq("ip", ip))
@@ -722,8 +732,9 @@ export const recordLoginFailure = mutation({
 });
 
 export const resetLoginAttempts = mutation({
-  args: { ip: v.string() },
-  handler: async (ctx, { ip }) => {
+  args: { adminSecret: v.string(), ip: v.string() },
+  handler: async (ctx, { adminSecret, ip }) => {
+    assertAdmin(adminSecret);
     const attempt = await ctx.db
       .query("loginAttempts")
       .withIndex("by_ip", (q) => q.eq("ip", ip))
@@ -739,6 +750,7 @@ export const resetLoginAttempts = mutation({
 
 export const adminAddProduct = mutation({
   args: {
+    adminSecret: v.string(),
     name: v.string(),
     brand: v.string(),
     model: v.string(),
@@ -753,6 +765,7 @@ export const adminAddProduct = mutation({
     sku: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    assertAdmin(args.adminSecret);
     let baseSlug = slugify(args.name);
     let slug = baseSlug;
     let counter = 1;
@@ -805,6 +818,7 @@ export const adminAddProduct = mutation({
 
 export const adminUpdateProduct = mutation({
   args: {
+    adminSecret: v.string(),
     id: v.string(), // matches client-side 'id' which is sourceId
     name: v.string(),
     brand: v.string(),
@@ -820,6 +834,7 @@ export const adminUpdateProduct = mutation({
     sku: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    assertAdmin(args.adminSecret);
     const existing = await ctx.db
       .query("products")
       .withIndex("by_sourceId", (q) => q.eq("sourceId", args.id))
@@ -874,8 +889,9 @@ export const adminUpdateProduct = mutation({
 // One-off data-migration helper (used by scripts/normalize-model-5g.js) —
 // patches only the `model` field, so it can't touch slug/facets/price/etc.
 export const adminSetModel = mutation({
-  args: { sourceId: v.string(), model: v.string() },
-  handler: async (ctx, { sourceId, model }) => {
+  args: { adminSecret: v.string(), sourceId: v.string(), model: v.string() },
+  handler: async (ctx, { adminSecret, sourceId, model }) => {
+    assertAdmin(adminSecret);
     const existing = await ctx.db
       .query("products")
       .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
@@ -891,11 +907,13 @@ export const adminSetModel = mutation({
 // record and redirecting bundle references after a duplicate is deleted.
 export const adminMigratePatchNameBundle = mutation({
   args: {
+    adminSecret: v.string(),
     sourceId: v.string(),
     name: v.optional(v.string()),
     bundleWith: v.optional(v.string()),
   },
-  handler: async (ctx, { sourceId, name, bundleWith }) => {
+  handler: async (ctx, { adminSecret, sourceId, name, bundleWith }) => {
+    assertAdmin(adminSecret);
     const existing = await ctx.db
       .query("products")
       .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
@@ -912,8 +930,9 @@ export const adminMigratePatchNameBundle = mutation({
 // One-off data-migration helper (used by scripts/backfill-sku.js) — patches
 // only the `sku` field, to assign article numbers to existing products.
 export const adminSetSku = mutation({
-  args: { sourceId: v.string(), sku: v.string() },
-  handler: async (ctx, { sourceId, sku }) => {
+  args: { adminSecret: v.string(), sourceId: v.string(), sku: v.string() },
+  handler: async (ctx, { adminSecret, sourceId, sku }) => {
+    assertAdmin(adminSecret);
     const existing = await ctx.db
       .query("products")
       .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
@@ -930,8 +949,9 @@ export const adminSetSku = mutation({
 // multiplies by the BGN peg for display — inflating every shown price by
 // ~95%. This patches just the two numeric fields to the corrected EUR value.
 export const adminFixPriceUnits = mutation({
-  args: { sourceId: v.string(), price: v.number(), oldPrice: v.optional(v.number()) },
-  handler: async (ctx, { sourceId, price, oldPrice }) => {
+  args: { adminSecret: v.string(), sourceId: v.string(), price: v.number(), oldPrice: v.optional(v.number()) },
+  handler: async (ctx, { adminSecret, sourceId, price, oldPrice }) => {
+    assertAdmin(adminSecret);
     const existing = await ctx.db
       .query("products")
       .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
@@ -949,8 +969,9 @@ export const adminFixPriceUnits = mutation({
 // scraped from the business's original site (keisove.net, matched by
 // sourceId = old article number / Drupal node ID).
 export const adminSetDescription = mutation({
-  args: { sourceId: v.string(), description: v.string() },
-  handler: async (ctx, { sourceId, description }) => {
+  args: { adminSecret: v.string(), sourceId: v.string(), description: v.string() },
+  handler: async (ctx, { adminSecret, sourceId, description }) => {
+    assertAdmin(adminSecret);
     const existing = await ctx.db
       .query("products")
       .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
@@ -967,8 +988,9 @@ export const adminSetDescription = mutation({
 // Dedupes in batches server-side (no files are touched — the duplicate
 // entries reference the same storage URLs).
 export const adminDedupeGalleries = mutation({
-  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
-  handler: async (ctx, { cursor, limit }) => {
+  args: { adminSecret: v.string(), cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { adminSecret, cursor, limit }) => {
+    assertAdmin(adminSecret);
     const page = await ctx.db
       .query("products")
       .paginate({ cursor, numItems: limit });
@@ -989,8 +1011,9 @@ export const adminDedupeGalleries = mutation({
 // so both the admin "new product" form and the backfill script agree on one
 // counter instead of guessing independently.
 export const getNextSku = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { adminSecret: v.string() },
+  handler: async (ctx, { adminSecret }) => {
+    assertAdmin(adminSecret);
     const last = await ctx.db.query("products").withIndex("by_sku").order("desc").first();
     const lastNum = last?.sku ? parseInt(last.sku.replace(/^KP-/, ""), 10) : 100000;
     const nextNum = (Number.isFinite(lastNum) ? lastNum : 100000) + 1;
@@ -999,8 +1022,9 @@ export const getNextSku = query({
 });
 
 export const adminDeleteProduct = mutation({
-  args: { id: v.string() }, // matches client-side 'id' which is sourceId
-  handler: async (ctx, { id }) => {
+  args: { adminSecret: v.string(), id: v.string() }, // matches client-side 'id' which is sourceId
+  handler: async (ctx, { adminSecret, id }) => {
+    assertAdmin(adminSecret);
     const existing = await ctx.db
       .query("products")
       .withIndex("by_sourceId", (q) => q.eq("sourceId", id))
@@ -1030,8 +1054,9 @@ export const getManyBySlugs = query({
 });
 
 export const listForMigration = query({
-  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
-  handler: async (ctx, { cursor, limit }) => {
+  args: { adminSecret: v.string(), cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { adminSecret, cursor, limit }) => {
+    assertAdmin(adminSecret);
     return await ctx.db
       .query("products")
       .paginate({ cursor, numItems: limit });
@@ -1040,18 +1065,21 @@ export const listForMigration = query({
 
 export const updateProductImageUrls = mutation({
   args: {
+    adminSecret: v.string(),
     id: v.id("products"),
     image: v.string(),
     gallery: v.array(v.string()),
   },
-  handler: async (ctx, { id, image, gallery }) => {
+  handler: async (ctx, { adminSecret, id, image, gallery }) => {
+    assertAdmin(adminSecret);
     await ctx.db.patch(id, { image, gallery });
   },
 });
 
 export const generateUploadUrl = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { adminSecret: v.string() },
+  handler: async (ctx, { adminSecret }) => {
+    assertAdmin(adminSecret);
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -1064,8 +1092,9 @@ export const getUrlFromStorageId = query({
 });
 
 export const getStoragePage = query({
-  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
-  handler: async (ctx, { cursor, limit }) => {
+  args: { adminSecret: v.string(), cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { adminSecret, cursor, limit }) => {
+    assertAdmin(adminSecret);
     const page = await ctx.db.system.query("_storage").paginate({ cursor, numItems: limit });
     return {
       isDone: page.isDone,
@@ -1076,8 +1105,9 @@ export const getStoragePage = query({
 });
 
 export const getStorageAuditPage = query({
-  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
-  handler: async (ctx, { cursor, limit }) => {
+  args: { adminSecret: v.string(), cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { adminSecret, cursor, limit }) => {
+    assertAdmin(adminSecret);
     const page = await ctx.db.system.query("_storage").paginate({ cursor, numItems: limit });
     const items = [];
     for (const f of page.page) {
@@ -1094,8 +1124,9 @@ export const getStorageAuditPage = query({
 });
 
 export const setFacetCounts = mutation({
-  args: { entries: v.array(v.object({ key: v.string(), count: v.number() })) },
-  handler: async (ctx, { entries }) => {
+  args: { adminSecret: v.string(), entries: v.array(v.object({ key: v.string(), count: v.number() })) },
+  handler: async (ctx, { adminSecret, entries }) => {
+    assertAdmin(adminSecret);
     for (const { key, count } of entries) {
       const existing = await ctx.db
         .query("facetCounts")
@@ -1112,15 +1143,17 @@ export const setFacetCounts = mutation({
 });
 
 export const listFacetCounts = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { adminSecret: v.string() },
+  handler: async (ctx, { adminSecret }) => {
+    assertAdmin(adminSecret);
     return await ctx.db.query("facetCounts").collect();
   },
 });
 
 export const deleteStorageFiles = mutation({
-  args: { ids: v.array(v.id("_storage")) },
-  handler: async (ctx, { ids }) => {
+  args: { adminSecret: v.string(), ids: v.array(v.id("_storage")) },
+  handler: async (ctx, { adminSecret, ids }) => {
+    assertAdmin(adminSecret);
     for (const id of ids) {
       await ctx.storage.delete(id);
     }
@@ -1129,8 +1162,9 @@ export const deleteStorageFiles = mutation({
 });
 
 export const getProductsPage = query({
-  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
-  handler: async (ctx, { cursor, limit }) => {
+  args: { adminSecret: v.string(), cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { adminSecret, cursor, limit }) => {
+    assertAdmin(adminSecret);
     const page = await ctx.db.query("products").paginate({ cursor, numItems: limit });
     return {
       isDone: page.isDone,
@@ -1144,8 +1178,9 @@ export const getProductsPage = query({
 });
 
 export const getProductImageDomains = query({
-  args: { cursor: v.union(v.null(), v.string()), limit: v.number() },
-  handler: async (ctx, { cursor, limit }) => {
+  args: { adminSecret: v.string(), cursor: v.union(v.null(), v.string()), limit: v.number() },
+  handler: async (ctx, { adminSecret, cursor, limit }) => {
+    assertAdmin(adminSecret);
     const page = await ctx.db.query("products").paginate({ cursor, numItems: limit });
     return {
       isDone: page.isDone,

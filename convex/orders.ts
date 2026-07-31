@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalQuery, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { assertAdmin } from "./adminAuth";
 
 const orderItemValidator = v.object({
   productId: v.string(),
@@ -49,22 +50,25 @@ export const createOrder = mutation({
 });
 
 export const getOrders = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { adminSecret: v.string() },
+  handler: async (ctx, { adminSecret }) => {
+    assertAdmin(adminSecret);
     return await ctx.db.query("orders").withIndex("by_seq").order("desc").collect();
   },
 });
 
 export const deleteOrder = mutation({
-  args: { orderId: v.id("orders") },
-  handler: async (ctx, { orderId }) => {
+  args: { adminSecret: v.string(), orderId: v.id("orders") },
+  handler: async (ctx, { adminSecret, orderId }) => {
+    assertAdmin(adminSecret);
     await ctx.db.delete(orderId);
   },
 });
 
 export const updateOrderStatus = mutation({
-  args: { orderId: v.id("orders"), status: v.string() },
-  handler: async (ctx, { orderId, status }) => {
+  args: { adminSecret: v.string(), orderId: v.id("orders"), status: v.string() },
+  handler: async (ctx, { adminSecret, orderId, status }) => {
+    assertAdmin(adminSecret);
     await ctx.db.patch(orderId, { status });
   },
 });
@@ -104,7 +108,9 @@ export const notifyNtfy = internalAction({
       "",
       itemsText,
       "",
-      `Общо: ${order.total.toFixed(2)} лв.`,
+      // Totals are stored in EUR; show the BGN equivalent alongside so the
+      // figure matches what the customer saw on the site.
+      `Общо: ${order.total.toFixed(2)} EUR (${(order.total * 1.95583).toFixed(2)} лв.)`,
     ]
       .filter(Boolean)
       .join("\n");

@@ -60,12 +60,26 @@ export const categories: Category[] = [
 // be skipped for these, since their products aren't tied to a phone model.
 export const NON_PHONE_CATEGORIES = new Set<string>(["toys"]);
 
+// Bulgaria's fixed currency-board peg — prices are stored in EUR and the BGN
+// figure is always derived from it, never stored separately.
+export const BGN_PER_EUR = 1.95583;
+
 export const FREE_SHIPPING_THRESHOLD = 45.50; // 89 BGN (formatted to EUR/BGN split)
 export const DEFAULT_SHIPPING_FEE = 3.55; // 6.95 BGN (formatted to EUR/BGN split)
 
+// Rounded BGN figure for customer-facing copy, derived from the threshold so
+// the promise in the banner can't drift away from what checkout charges.
+export const FREE_SHIPPING_THRESHOLD_BGN = Math.round(FREE_SHIPPING_THRESHOLD * BGN_PER_EUR);
+
+/** Shipping fee for an order subtotal, in EUR. Single source of truth for
+ *  the cart, the checkout and the quick-order modal. */
+export function shippingFor(subtotal: number): number {
+  if (subtotal <= 0) return 0;
+  return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FEE;
+}
 
 export function formatPrice(value: number): string {
-  const bgn = value * 1.95583;
+  const bgn = value * BGN_PER_EUR;
   return `€${value.toFixed(2)} (${bgn.toFixed(2).replace(".", ",")} лв.)`;
 }
 

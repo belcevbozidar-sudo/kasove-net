@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { assertAdmin } from "./adminAuth";
 
 const DEFAULT_SLIDES = [
   {
@@ -43,8 +44,9 @@ export const list = query({
 });
 
 export const seed = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { adminSecret: v.string() },
+  handler: async (ctx, { adminSecret }) => {
+    assertAdmin(adminSecret);
     const existing = await ctx.db.query("slides").collect();
     for (const s of existing) {
       await ctx.db.delete(s._id);
@@ -58,6 +60,7 @@ export const seed = mutation({
 
 export const add = mutation({
   args: {
+    adminSecret: v.string(),
     image: v.string(),
     eyebrow: v.string(),
     title: v.string(),
@@ -66,13 +69,17 @@ export const add = mutation({
     ctaHref: v.string(),
     order: v.number(),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("slides", args);
+  // adminSecret must be destructured out — the rest is spread straight into
+  // the document, and the secret must never be persisted.
+  handler: async (ctx, { adminSecret, ...slide }) => {
+    assertAdmin(adminSecret);
+    return await ctx.db.insert("slides", slide);
   },
 });
 
 export const update = mutation({
   args: {
+    adminSecret: v.string(),
     id: v.id("slides"),
     image: v.string(),
     eyebrow: v.string(),
@@ -82,14 +89,16 @@ export const update = mutation({
     ctaHref: v.string(),
     order: v.number(),
   },
-  handler: async (ctx, { id, ...args }) => {
+  handler: async (ctx, { adminSecret, id, ...args }) => {
+    assertAdmin(adminSecret);
     return await ctx.db.patch(id, args);
   },
 });
 
 export const deleteSlide = mutation({
-  args: { id: v.id("slides") },
-  handler: async (ctx, { id }) => {
+  args: { adminSecret: v.string(), id: v.id("slides") },
+  handler: async (ctx, { adminSecret, id }) => {
+    assertAdmin(adminSecret);
     return await ctx.db.delete(id);
   },
 });
