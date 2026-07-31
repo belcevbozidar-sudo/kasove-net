@@ -86,7 +86,29 @@ export const HOMEPAGE_CATEGORY_SLUGS = new Set<string>([
 
 // Categories that aren't phone accessories: the shop's brand/model wizard must
 // be skipped for these, since their products aren't tied to a phone model.
-export const NON_PHONE_CATEGORIES = new Set<string>(["toys"]);
+// Categories where most of the inventory is tagged brand="universal" (not
+// tied to any single phone brand) — asking "which phone brand?" first would
+// just hide the majority of the category behind an extra click for no
+// reason, so these skip straight to the listing like "toys" already does.
+// (Ratio of universal-brand products per category, measured directly
+// against the DB: memory-cards 100%, tablet-cases 92%, other 90%,
+// bluetooth-headphones 84%, universal-cases 83%, powerbanks 79%,
+// apple-accessories is Apple-scoped by definition so the brand step adds
+// nothing either way. Categories NOT here — handsfree, batteries,
+// chargers-12v, chargers-220v, usb-cables, car-stands, smart-devices,
+// gsm-accessories — keep the wizard because most of their products ARE
+// tied to a specific phone brand; the "Универсални" tile added to that
+// wizard covers their universal-brand minority.)
+export const NON_PHONE_CATEGORIES = new Set<string>([
+  "toys",
+  "memory-cards",
+  "tablet-cases",
+  "other",
+  "bluetooth-headphones",
+  "universal-cases",
+  "powerbanks",
+  "apple-accessories",
+]);
 
 // Bulgaria's fixed currency-board peg — prices are stored in EUR and the BGN
 // figure is always derived from it, never stored separately.
