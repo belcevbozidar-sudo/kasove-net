@@ -1,5 +1,6 @@
 import "server-only";
 import { fetchQuery } from "convex/nextjs";
+import type { FunctionReturnType } from "convex/server";
 import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
 import type { Badge, BrandSlug, CategorySlug, Product } from "./types";
@@ -149,18 +150,25 @@ export async function getBundleProducts(product: Product): Promise<Product[]> {
         .filter((w) => w.length > 0 && w !== "5g" && w !== "4g")
     );
 
-    // Fetch all protectors for this brand
-    const result = await fetchQuery(api.products.list, {
-      brand: product.brand,
-      category: "protectors",
-      paginationOpts: {
-        numItems: 100, // Fetch up to 100 screen protectors to perform keyword matching
-        cursor: null
-      }
-    });
+    // Fetch every protector for this brand — a single capped page (previously
+    // 100 items) silently missed models for brands like Samsung/Apple that
+    // carry 800+ protectors, since the default order isn't grouped by model.
+    const protectorDocs: Doc<"products">[] = [];
+    let protectorCursor: string | null = null;
+    let protectorIsDone = false;
+    while (!protectorIsDone) {
+      const protectorPage: FunctionReturnType<typeof api.products.list> = await fetchQuery(api.products.list, {
+        brand: product.brand,
+        category: "protectors",
+        paginationOpts: { numItems: 200, cursor: protectorCursor },
+      });
+      protectorDocs.push(...protectorPage.page);
+      protectorIsDone = protectorPage.isDone;
+      protectorCursor = protectorPage.continueCursor;
+    }
 
-    if (result.page && result.page.length > 0) {
-      const protectors = result.page.map(toProduct);
+    if (protectorDocs.length > 0) {
+      const protectors = protectorDocs.map(toProduct);
 
       // A protector's model must match the case's model *exactly* (same
       // word set) — not just contain it. Otherwise a plain "S26" case

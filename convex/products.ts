@@ -157,14 +157,6 @@ export const list = query({
         return name.includes(`1:${scaleNum}`) || name.includes(`1/${scaleNum}`) || name.includes(`1-${scaleNum}`);
       };
 
-      const matchesModel = (p: Doc<"products">) => {
-        if (!model || model === "all") return true;
-        return (
-          p.model === model ||
-          p.name.toLowerCase().includes(model.toLowerCase())
-        );
-      };
-
       const matchesPrice = (p: Doc<"products">) => {
         if (maxPrice === undefined) return true;
         return p.price <= maxPrice;
@@ -287,7 +279,18 @@ export const list = query({
         }
       }
 
-      const filtered = products.filter((p) => matchesScale(p.name) && matchesModel(p) && matchesPrice(p));
+      // No matchesModel(p) re-filter here: by the time we reach this line,
+      // `products` was already built either (a) with brand and/or bare
+      // model already applied via getModelVariations + nameSegmentMatchesModel
+      // above — a much more complete match than a crude substring check could
+      // repeat — or (b) with no model filter requested at all (model is
+      // falsy/"all"). A crude "p.model === model || name.includes(model)"
+      // re-check used to sit here and actively DROPPED valid matches whenever
+      // the caller passed a model string containing the brand name (e.g.
+      // "Samsung S23 Ultra") against products named "... Samsung Galaxy S23
+      // Ultra ...", since "Galaxy" breaks the substring check even though the
+      // product is the exact right model.
+      const filtered = products.filter((p) => matchesScale(p.name) && matchesPrice(p));
 
       const sorted = [...filtered].sort((a, b) => {
         if (sort === "price-asc") return a.price - b.price;
@@ -488,13 +491,45 @@ export const getSimilar = query({
   args: { sourceId: v.string(), category: v.string(), brand: v.string(), model: v.string(), limit: v.number() },
   handler: async (ctx, { sourceId, category, brand, model, limit }) => {
     if (!model) return [];
-    const docs = await ctx.db
+    // Same brand + model can be stored under slightly different `model`
+    // spellings ("Samsung S23 Ultra" vs "Samsung Galaxy S23 Ultra") depending
+    // on which import batch a product came from — an exact eq() match on the
+    // raw field silently hides real matches. Use the same variant expansion
+    // the shop's own model filter relies on, so "similar products" sees
+    // everything the shop listing for this model would.
+    const variations = getModelVariations(model, brand);
+    const seenIds = new Set<string>();
+    const matches: Doc<"products">[] = [];
+    for (const variant of variations) {
+      const docs = await ctx.db
+        .query("products")
+        .withIndex("by_brand_model", (q) => q.eq("brand", brand).eq("model", variant))
+        .collect();
+      for (const doc of docs) {
+        if (doc.sourceId !== sourceId && doc.category === category && !seenIds.has(doc._id)) {
+          seenIds.add(doc._id);
+          matches.push(doc);
+        }
+      }
+    }
+    // Combined multi-model products ("... Honor 600 / 600 Pro ...") carry
+    // only one value in `model` — pick them up by name segment too.
+    const nameCandidates = await ctx.db
       .query("products")
-      .withIndex("by_brand_model", (q) => q.eq("brand", brand).eq("model", model))
-      .collect();
-    return docs
-      .filter((p) => p.sourceId !== sourceId && p.category === category)
-      .slice(0, limit);
+      .withSearchIndex("search_name", (sq) => sq.search("name", model).eq("brand", brand))
+      .take(200);
+    for (const doc of nameCandidates) {
+      if (
+        doc.sourceId !== sourceId &&
+        doc.category === category &&
+        !seenIds.has(doc._id) &&
+        nameSegmentMatchesModel(doc.name, model, brand)
+      ) {
+        seenIds.add(doc._id);
+        matches.push(doc);
+      }
+    }
+    return matches.slice(0, limit);
   },
 });
 
