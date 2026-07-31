@@ -612,71 +612,11 @@ export default function Header() {
               )}
             </div>
 
-            {/* Top-level shortcuts first */}
-            <ul className="mb-5 space-y-1">
-              <li>
-                <Link
-                  href="/new-products"
-                  onClick={() => setMobileOpen(false)}
-                  className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
-                >
-                  Нови продукти
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/shop?category=toys"
-                  onClick={() => setMobileOpen(false)}
-                  className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
-                >
-                  Метални колички
-                </Link>
-              </li>
-            </ul>
-
-            {/* Категории — mirrors the desktop "Категории" mega-menu 1:1:
-                every real accessory category as a collapsible row, full
-                subcategory list shown on expand (never truncated). */}
-            <div className="mb-5 border-t border-border-c pt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Категории</p>
-              <ul className="space-y-1">
-                {categoryMenuData
-                  .filter((cat) => cat.slug !== "brands" && cat.slug !== "new-products" && cat.slug !== "toys")
-                  .map((cat) => {
-                    const open = mobileExpanded.has(cat.slug);
-                    return (
-                      <li key={cat.slug}>
-                        <MobileAccordionRow
-                          href={cat.href}
-                          label={cat.name}
-                          open={open}
-                          onToggle={() => toggleMobileExpanded(cat.slug)}
-                          onNavigate={() => setMobileOpen(false)}
-                        />
-                        {open && cat.subcategories && cat.subcategories.length > 0 && (
-                          <ul className="ml-3 mb-1 space-y-0.5 border-l border-border-c pl-3">
-                            {cat.subcategories.map((sub) => (
-                              <li key={sub.name}>
-                                <Link
-                                  href={sub.href}
-                                  onClick={() => setMobileOpen(false)}
-                                  className="block rounded-lg px-2 py-2 text-sm text-text-muted hover:text-accent"
-                                >
-                                  {sub.name}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    );
-                  })}
-              </ul>
-            </div>
-
-            {/* Марки — same per-brand model dropdowns as the desktop nav bar,
-                one-to-one: every model listed, no "show more" truncation. */}
-            <div className="mb-5 border-t border-border-c pt-4">
+            {/* Марки — pinned to the very top of the drawer, above even the
+                shortcuts, per explicit request. Same per-brand model
+                dropdowns as the desktop nav bar, one-to-one: every model
+                listed, no "show more" truncation. */}
+            <div className="mb-5">
               <p className="mb-2 text-base font-extrabold uppercase tracking-wide gradient-text">Марки</p>
               <ul className="space-y-1">
                 {brands
@@ -742,6 +682,68 @@ export default function Header() {
                     </ul>
                   )}
                 </li>
+              </ul>
+            </div>
+
+            {/* Top-level shortcuts */}
+            <ul className="mb-5 space-y-1 border-t border-border-c pt-4">
+              <li>
+                <Link
+                  href="/new-products"
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
+                >
+                  Нови продукти
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/shop?category=toys"
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-lg px-2 py-2.5 hover:bg-surface-2 font-medium"
+                >
+                  Метални колички
+                </Link>
+              </li>
+            </ul>
+
+            {/* Категории — mirrors the desktop "Категории" mega-menu 1:1:
+                every real accessory category as a collapsible row, full
+                subcategory list shown on expand (never truncated). */}
+            <div className="mb-5 border-t border-border-c pt-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Категории</p>
+              <ul className="space-y-1">
+                {categoryMenuData
+                  .filter((cat) => cat.slug !== "brands" && cat.slug !== "new-products" && cat.slug !== "toys")
+                  .map((cat) => {
+                    const open = mobileExpanded.has(cat.slug);
+                    return (
+                      <li key={cat.slug}>
+                        <MobileAccordionRow
+                          href={cat.href}
+                          label={cat.name}
+                          open={open}
+                          onToggle={() => toggleMobileExpanded(cat.slug)}
+                          onNavigate={() => setMobileOpen(false)}
+                        />
+                        {open && cat.subcategories && cat.subcategories.length > 0 && (
+                          <ul className="ml-3 mb-1 space-y-0.5 border-l border-border-c pl-3">
+                            {cat.subcategories.map((sub) => (
+                              <li key={sub.name}>
+                                <Link
+                                  href={sub.href}
+                                  onClick={() => setMobileOpen(false)}
+                                  className="block rounded-lg px-2 py-2 text-sm text-text-muted hover:text-accent"
+                                >
+                                  {sub.name}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    );
+                  })}
               </ul>
             </div>
 
