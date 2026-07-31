@@ -1096,6 +1096,28 @@ export const adminDeleteProduct = mutation({
   },
 });
 
+// Narrow category-only patch used by scripts/fix-orphan-categories.js to move
+// products out of category values that aren't in the site's own category
+// menu (src/lib/data.ts `categories`) — those products were otherwise
+// unreachable via any category-based navigation, only via direct search.
+export const adminSetCategory = mutation({
+  args: { adminSecret: v.string(), sourceId: v.string(), category: v.string() },
+  handler: async (ctx, { adminSecret, sourceId, category }) => {
+    assertAdmin(adminSecret);
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+      .first();
+    if (!existing) return false;
+    if (existing.category !== category) {
+      await adjustFacetCount(ctx.db, existing.category, existing.brand, -1);
+      await adjustFacetCount(ctx.db, category, existing.brand, 1);
+      await ctx.db.patch(existing._id, { category });
+    }
+    return true;
+  },
+});
+
 export const getManyBySlugs = query({
   args: { slugs: v.array(v.string()) },
   handler: async (ctx, { slugs }) => {
