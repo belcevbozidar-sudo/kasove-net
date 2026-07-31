@@ -15,11 +15,58 @@ import { categoryMenuData } from "@/lib/category-menu-data";
 
 const BRAND_DROPDOWN_VISIBLE_LIMIT = 42; // 7 rows x 6 columns (the nav is desktop-only, lg = 6 cols)
 
+function MobileAccordionRow({
+  href,
+  label,
+  open,
+  onToggle,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  open: boolean;
+  onToggle: () => void;
+  onNavigate: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-lg hover:bg-surface-2">
+      <Link href={href} onClick={onNavigate} className="flex-1 px-2 py-2.5 font-medium">
+        {label}
+      </Link>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={open ? "Скрий опциите" : "Покажи опциите"}
+        className="p-2.5 text-text-muted"
+      >
+        <svg
+          className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMenuCat, setActiveMenuCat] = useState("brands");
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+  const [mobileExpanded, setMobileExpanded] = useState<Set<string>>(new Set());
+
+  function toggleMobileExpanded(key: string) {
+    setMobileExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -565,23 +612,8 @@ export default function Header() {
               )}
             </div>
 
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Марки</p>
-            <ul className="mb-6 space-y-1">
-              {brands.filter((b) => b.slug !== "diecast-cars").map((b) => (
-                <li key={b.slug}>
-                  <Link
-                    href={`/brand/${b.slug}`}
-                    onClick={() => setMobileOpen(false)}
-                    className="block rounded-lg px-2 py-2.5 font-medium hover:bg-surface-2"
-                  >
-                    {b.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Раздели</p>
-            <ul className="mb-6 space-y-1">
+            {/* Top-level shortcuts first */}
+            <ul className="mb-5 space-y-1">
               <li>
                 <Link
                   href="/new-products"
@@ -601,6 +633,117 @@ export default function Header() {
                 </Link>
               </li>
             </ul>
+
+            {/* Категории — mirrors the desktop "Категории" mega-menu 1:1:
+                every real accessory category as a collapsible row, full
+                subcategory list shown on expand (never truncated). */}
+            <div className="mb-5 border-t border-border-c pt-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Категории</p>
+              <ul className="space-y-1">
+                {categoryMenuData
+                  .filter((cat) => cat.slug !== "brands" && cat.slug !== "new-products" && cat.slug !== "toys")
+                  .map((cat) => {
+                    const open = mobileExpanded.has(cat.slug);
+                    return (
+                      <li key={cat.slug}>
+                        <MobileAccordionRow
+                          href={cat.href}
+                          label={cat.name}
+                          open={open}
+                          onToggle={() => toggleMobileExpanded(cat.slug)}
+                          onNavigate={() => setMobileOpen(false)}
+                        />
+                        {open && cat.subcategories && cat.subcategories.length > 0 && (
+                          <ul className="ml-3 mb-1 space-y-0.5 border-l border-border-c pl-3">
+                            {cat.subcategories.map((sub) => (
+                              <li key={sub.name}>
+                                <Link
+                                  href={sub.href}
+                                  onClick={() => setMobileOpen(false)}
+                                  className="block rounded-lg px-2 py-2 text-sm text-text-muted hover:text-accent"
+                                >
+                                  {sub.name}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    );
+                  })}
+              </ul>
+            </div>
+
+            {/* Марки — same per-brand model dropdowns as the desktop nav bar,
+                one-to-one: every model listed, no "show more" truncation. */}
+            <div className="mb-5 border-t border-border-c pt-4">
+              <p className="mb-2 text-base font-extrabold uppercase tracking-wide gradient-text">Марки</p>
+              <ul className="space-y-1">
+                {brands
+                  .filter((b) => b.slug !== "diecast-cars" && b.slug !== "other")
+                  .map((b) => {
+                    const bModels = (brandModelsData as Record<string, string[]>)[b.slug] || [];
+                    const open = mobileExpanded.has(`brand-${b.slug}`);
+                    return (
+                      <li key={b.slug}>
+                        <MobileAccordionRow
+                          href={`/brand/${b.slug}`}
+                          label={b.name}
+                          open={open}
+                          onToggle={() => toggleMobileExpanded(`brand-${b.slug}`)}
+                          onNavigate={() => setMobileOpen(false)}
+                        />
+                        {open && bModels.length > 0 && (
+                          <ul className="ml-3 mb-1 grid grid-cols-2 gap-x-2 border-l border-border-c pl-3">
+                            {bModels.map((m) => (
+                              <li key={m}>
+                                <Link
+                                  href={`/shop?brand=${b.slug}&model=${encodeURIComponent(m)}`}
+                                  onClick={() => setMobileOpen(false)}
+                                  className="block truncate rounded-lg px-2 py-1.5 text-xs text-text-muted hover:text-accent"
+                                >
+                                  {formatModelDisplay(b.slug, m)}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    );
+                  })}
+
+                {/* Други — same brand list as the desktop nav bar's "Други" dropdown */}
+                <li>
+                  <MobileAccordionRow
+                    href="/shop?brand=other"
+                    label="Други"
+                    open={mobileExpanded.has("brand-other")}
+                    onToggle={() => toggleMobileExpanded("brand-other")}
+                    onNavigate={() => setMobileOpen(false)}
+                  />
+                  {mobileExpanded.has("brand-other") && (
+                    <ul className="ml-3 mb-1 grid grid-cols-2 gap-x-2 border-l border-border-c pl-3">
+                      {allBrands
+                        .filter(
+                          (ob) =>
+                            !["apple", "samsung", "xiaomi", "honor", "motorola", "huawei", "universal", "other", "diecast-cars"].includes(ob.slug)
+                        )
+                        .map((ob) => (
+                          <li key={ob.slug}>
+                            <Link
+                              href={`/brand/${ob.slug}`}
+                              onClick={() => setMobileOpen(false)}
+                              className="block truncate rounded-lg px-2 py-1.5 text-xs text-text-muted hover:text-accent"
+                            >
+                              {ob.name}
+                            </Link>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </li>
+              </ul>
+            </div>
 
             <ul className="space-y-1 border-t border-border-c pt-4 text-sm text-text-muted">
               <li>
