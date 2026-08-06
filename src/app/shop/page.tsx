@@ -272,22 +272,6 @@ export default async function ShopPage({
                   </Link>
                 );
               })}
-
-            {/* Универсални — many products (screen protectors, chargers,
-                cases, power banks, ...) aren't tied to any single phone
-                brand at all; without this tile they were unreachable from
-                the wizard no matter which real brand a visitor picked. */}
-            <Link
-              href={`/shop?${new URLSearchParams({ ...(sp.category ? { category: sp.category } : {}), brand: "universal" }).toString()}`}
-              className="group relative flex aspect-[1.45/1] flex-col items-center justify-between rounded-[2rem] border border-border-c bg-zinc-950 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.03] overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-600 to-zinc-950 opacity-70 group-hover:opacity-85 transition-all duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
-              <div className="relative z-10 flex-1 flex items-center justify-center w-full" />
-              <span className="relative z-10 text-sm font-black uppercase tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] mt-auto group-hover:text-accent transition-colors duration-300">
-                Универсални
-              </span>
-            </Link>
           </div>
         </div>
       )}

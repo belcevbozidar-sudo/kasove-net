@@ -533,6 +533,57 @@ export const getSimilar = query({
   },
 });
 
+// Distinct product categories that actually have stock for a given
+// brand+model, used by the shop sidebar so the "Тип продукт" filter only
+// ever lists types that exist for the phone currently selected — never a
+// dead-end category with zero matching products.
+export const getAvailableCategories = query({
+  args: { brand: v.optional(v.string()), model: v.string() },
+  handler: async (ctx, { brand, model }) => {
+    const variations = getModelVariations(model, brand || "universal");
+    const seenIds = new Set<string>();
+    const categories = new Set<string>();
+
+    for (const variant of variations) {
+      const docs = brand
+        ? await ctx.db
+            .query("products")
+            .withIndex("by_brand_model", (qq) => qq.eq("brand", brand).eq("model", variant))
+            .collect()
+        : await ctx.db
+            .query("products")
+            .withIndex("by_model", (qq) => qq.eq("model", variant))
+            .collect();
+      for (const doc of docs) {
+        if (!seenIds.has(doc._id)) {
+          seenIds.add(doc._id);
+          categories.add(doc.category);
+        }
+      }
+    }
+
+    // Combined multi-model products ("... Honor 600 / 600 Pro ...") live
+    // under a different `model` value — pick them up by name segment too,
+    // same as the main product list query.
+    const nameCandidates = await ctx.db
+      .query("products")
+      .withSearchIndex("search_name", (sq) => {
+        let q = sq.search("name", model);
+        if (brand) q = q.eq("brand", brand);
+        return q;
+      })
+      .take(200);
+    for (const doc of nameCandidates) {
+      if (!seenIds.has(doc._id) && nameSegmentMatchesModel(doc.name, model, doc.brand)) {
+        seenIds.add(doc._id);
+        categories.add(doc.category);
+      }
+    }
+
+    return Array.from(categories);
+  },
+});
+
 export const getModels = query({
   args: { brand: v.string() },
   handler: async (ctx, { brand }) => {

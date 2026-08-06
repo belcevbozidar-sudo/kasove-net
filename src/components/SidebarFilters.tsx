@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { categories, brands, formatPrice } from "@/lib/data";
 import { formatModelDisplay } from "@/lib/format-model";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 interface SidebarFiltersProps {
   availableModels: string[];
@@ -66,6 +68,20 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
   const maxPriceEur = maxPrice / 1.95583;
 
   const [isOpen, setIsOpen] = useState(false);
+
+  // Once a specific brand + model is selected, "Тип продукт" should only
+  // ever list categories that this exact model actually has products in —
+  // never a category that would immediately dead-end into an empty grid.
+  const availableCategorySlugs = useQuery(
+    api.products.getAvailableCategories,
+    activeBrand !== "all" && activeModel
+      ? { brand: activeBrand, model: activeModel }
+      : "skip"
+  );
+  const visibleCategories =
+    activeBrand !== "all" && activeModel && availableCategorySlugs
+      ? categories.filter((c) => availableCategorySlugs.includes(c.slug))
+      : categories;
 
   return (
     <div className="w-full lg:w-64 shrink-0">
@@ -170,7 +186,7 @@ export default function SidebarFilters({ availableModels }: SidebarFiltersProps)
               >
                 <span>Всички аксесоари</span>
               </button>
-              {categories
+              {visibleCategories
                 .filter((c) => !(activeModel && c.slug === "toys"))
                 .map((c) => (
                 <button

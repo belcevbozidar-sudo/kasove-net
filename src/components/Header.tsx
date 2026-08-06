@@ -56,8 +56,25 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMenuCat, setActiveMenuCat] = useState("brands");
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  // Once a link inside a given menu has been clicked, that menu key is
+  // "suppressed" — mouse-enter no longer reopens it — until the mouse
+  // actually leaves the trigger and re-enters it.
+  const [suppressedMenu, setSuppressedMenu] = useState<string | null>(null);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState<Set<string>>(new Set());
+
+  function openMenu(key: string) {
+    if (suppressedMenu === key) return;
+    setHoveredMenu(key);
+  }
+  function leaveMenu(key: string) {
+    setHoveredMenu((prev) => (prev === key ? null : prev));
+    setSuppressedMenu((prev) => (prev === key ? null : prev));
+  }
+  function closeMenuOnSelect(key: string) {
+    setHoveredMenu(null);
+    setSuppressedMenu(key);
+  }
 
   function toggleMobileExpanded(key: string) {
     setMobileExpanded((prev) => {
@@ -291,7 +308,11 @@ export default function Header() {
           <nav className="hidden lg:block border-t border-border-c bg-surface/90 backdrop-blur-md">
             <div className="mx-auto flex max-w-7xl items-center justify-between container-p py-0 text-[13px] font-extrabold uppercase tracking-wide text-text relative">
               {/* Категории — full-site sitemap mega-menu (first item) */}
-              <div className="group relative py-4">
+              <div
+                className="group relative py-4"
+                onMouseEnter={() => openMenu("categories")}
+                onMouseLeave={() => leaveMenu("categories")}
+              >
                 <button className="flex items-center gap-1.5 uppercase text-text hover:text-accent transition-colors py-1 cursor-pointer">
                   <svg className="w-3.5 h-3.5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
@@ -303,7 +324,7 @@ export default function Header() {
                 </button>
 
                 {/* Mega Menu Flyout Panel — the whole site, organized */}
-                <div className="absolute left-0 top-full z-[120] pt-2 hidden group-hover:block animate-fade-in">
+                <div className={`absolute left-0 top-full z-[120] pt-2 animate-fade-in ${hoveredMenu === "categories" ? "block" : "hidden"}`}>
                   <div className="w-[52rem] rounded-3xl border border-border-c bg-surface shadow-2xl overflow-hidden flex h-[480px]">
                     {/* Left side list of main sections */}
                     <div className="w-[20rem] border-r border-border-c overflow-y-auto scrollbar-thin py-3 bg-surface-2/30">
@@ -312,6 +333,7 @@ export default function Header() {
                           key={cat.slug}
                           href={cat.href}
                           onMouseEnter={() => setActiveMenuCat(cat.slug)}
+                          onClick={() => closeMenuOnSelect("categories")}
                           className={`flex items-center justify-between px-5 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider transition-all border-l-2 ${
                             activeMenuCat === cat.slug
                               ? "border-accent bg-accent/5 text-accent"
@@ -345,6 +367,7 @@ export default function Header() {
                                   <Link
                                     key={sub.name}
                                     href={sub.href}
+                                    onClick={() => closeMenuOnSelect("categories")}
                                     className="text-xs font-bold text-text hover:text-accent border border-border-c/75 hover:border-accent/60 bg-surface-2/40 hover:bg-accent/5 py-3 px-4 rounded-xl transition-all text-left flex items-center justify-between group/sub"
                                   >
                                     <span>{sub.name}</span>
@@ -359,6 +382,7 @@ export default function Header() {
                                 <p className="text-sm text-text-muted font-bold">Няма допълнителни подкатегории</p>
                                 <Link
                                   href={activeCatData.href}
+                                  onClick={() => closeMenuOnSelect("categories")}
                                   className="mt-4 rounded-full gradient-brand px-6 py-2.5 text-xs font-extrabold text-white shadow-md hover:scale-[1.02] transition-all"
                                 >
                                   Разгледай всички продукти
@@ -389,15 +413,15 @@ export default function Header() {
                     <div
                       key={b.slug}
                       className="group py-4"
-                      onMouseEnter={() => setHoveredMenu(b.slug)}
+                      onMouseEnter={() => openMenu(b.slug)}
                       onMouseLeave={() => {
-                        setHoveredMenu(null);
+                        leaveMenu(b.slug);
                         setExpandedMenu(null);
                       }}
                     >
                       <Link
                         href={`/brand/${b.slug}`}
-                        onClick={() => setHoveredMenu(null)}
+                        onClick={() => closeMenuOnSelect(b.slug)}
                         className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                       >
                         {b.name}
@@ -418,7 +442,7 @@ export default function Header() {
                                 <Link
                                   key={m}
                                   href={`/shop?brand=${b.slug}&model=${encodeURIComponent(m)}`}
-                                  onClick={() => setHoveredMenu(null)}
+                                  onClick={() => closeMenuOnSelect(b.slug)}
                                   className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                                 >
                                   • {formatModelDisplay(b.slug, m)}
@@ -447,12 +471,12 @@ export default function Header() {
               {/* Brand "Други" (Others) */}
               <div
                 className="group py-4"
-                onMouseEnter={() => setHoveredMenu("other")}
-                onMouseLeave={() => setHoveredMenu(null)}
+                onMouseEnter={() => openMenu("other")}
+                onMouseLeave={() => leaveMenu("other")}
               >
                 <Link
                   href="/shop?brand=other"
-                  onClick={() => setHoveredMenu(null)}
+                  onClick={() => closeMenuOnSelect("other")}
                   className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                 >
                   Други
@@ -477,7 +501,7 @@ export default function Header() {
                           <Link
                             key={ob.slug}
                             href={`/brand/${ob.slug}`}
-                            onClick={() => setHoveredMenu(null)}
+                            onClick={() => closeMenuOnSelect("other")}
                             className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                           >
                             • {ob.name}
@@ -491,12 +515,12 @@ export default function Header() {
               {/* Метални колички (Diecast Cars) */}
               <div
                 className="group relative py-4"
-                onMouseEnter={() => setHoveredMenu("diecast-cars")}
-                onMouseLeave={() => setHoveredMenu(null)}
+                onMouseEnter={() => openMenu("diecast-cars")}
+                onMouseLeave={() => leaveMenu("diecast-cars")}
               >
                 <Link
                   href="/shop?category=toys"
-                  onClick={() => setHoveredMenu(null)}
+                  onClick={() => closeMenuOnSelect("diecast-cars")}
                   className="text-text hover:text-accent transition-colors flex items-center gap-1.5 py-1"
                 >
                   Метални колички
@@ -520,7 +544,7 @@ export default function Header() {
                         <Link
                           key={sc.label}
                           href={sc.href}
-                          onClick={() => setHoveredMenu(null)}
+                          onClick={() => closeMenuOnSelect("diecast-cars")}
                           className="text-left text-xs font-bold text-text-muted hover:text-accent py-1 transition-all hover:translate-x-1.5 duration-200 cursor-pointer block truncate"
                         >
                           • {sc.label}
